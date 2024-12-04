@@ -109,14 +109,28 @@ def get_place_urls(browser, location):
     browser.get(base_url)
 
     while True:
-        places_to_stay = wait_for_elements(browser, By.CLASS_NAME, "atm_7l_1j28jx2")
-        for place in places_to_stay:
-            url = place.get_attribute('href')
-            if url:
-                urls.add(url)
+        try:
+            places_to_stay = wait_for_elements(browser, By.CLASS_NAME, "atm_7l_1j28jx2")
+            for place in places_to_stay:
+                url = place.get_attribute('href')
+                if url:
+                    urls.add(url)
 
-        logging.info(f"Found {len(urls)} unique places so far")
+            logging.info(f"Found {len(urls)} unique places so far")
+        except Exception as e:
+            logging.error(f"Failed to get a single place to stay")
 
+            try:
+                places_to_stay = wait_for_elements(browser, By.CLASS_NAME, "lr88w8j")
+                for place in places_to_stay:
+                    url = place.get_attribute('href')
+                    if url:
+                        urls.add(url)
+
+                logging.info(f"Found {len(urls)} unique places so far")
+
+            except Exception as e:
+                logging.error(f"Failed to get multiple places to stay")
         try:
             next_button = WebDriverWait(browser, 10).until(
                 EC.element_to_be_clickable((By.XPATH, "//a[@aria-label='Next']"))
@@ -183,7 +197,7 @@ def scrape_place_details(browser, url):
     time.sleep(5)  # Wait for page to load
 
     place = {"url": url, "title": get_text_or_empty(browser, By.TAG_NAME, "h1"),
-             "picture_url": get_attribute_or_empty(browser, By.CLASS_NAME, "itu7ddv", "src"),
+             "picture_url": get_attribute_or_empty(browser, By.CLASS_NAME, "i1ezuexe", "src"),
              "description": get_text_or_empty(browser, By.CLASS_NAME, "l1h825yc"),
              "price": get_price(browser, By.CLASS_NAME, "_j1kt73"),
              "rating": get_text_or_empty(browser, By.CLASS_NAME, "r1dxllyb"),
@@ -255,6 +269,8 @@ def get_city_data():
         place_urls = get_place_urls(browser, city)
         place_details = []
         for url in place_urls:
+            logging.info(f"Getting details for: {url}")
+
             details = scrape_place_details(browser, url)
             place_details.append(details)
 
