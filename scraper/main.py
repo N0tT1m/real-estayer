@@ -33,10 +33,9 @@ logger = logging.getLogger(__name__)
 
 # List of Canadian provinces and territories
 CANADIAN_PROVINCES = [
-    # "Alberta", "British Columbia", "Manitoba", "New Brunswick", "Newfoundland and Labrador",
-    # "Northwest Territories", "Nova Scotia", "Nunavut", "Ontario", "Prince Edward Island",
-    # "Quebec", "Saskatchewan",
-    "Yukon"
+    "Alberta", "British Columbia", "Manitoba", "New Brunswick", "Newfoundland and Labrador",
+    "Northwest Territories", "Nova Scotia", "Nunavut", "Ontario", "Prince Edward Island",
+    "Quebec", "Saskatchewan", "Yukon"
 ]
 
 # List of US states
@@ -201,7 +200,7 @@ def scrape_place_details(browser, url):
              "description": get_text_or_empty(browser, By.CLASS_NAME, "l1h825yc"),
              "price": get_price(browser, By.CLASS_NAME, "_j1kt73"),
              "rating": get_text_or_empty(browser, By.CLASS_NAME, "r1dxllyb"),
-             "location": get_text_or_empty(browser, By.CLASS_NAME, "_152qbzi"),
+             "location": get_text_or_empty(browser, By.CLASS_NAME, "s1qk96pm"), # _152qbzi
              "features": scrape_features(browser),
              "house_details": scrape_house_details(browser)}
 
