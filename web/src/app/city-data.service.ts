@@ -7,11 +7,7 @@ import { catchError } from 'rxjs/operators';
   providedIn: 'root'
 })
 export class CityDataService {
-<<<<<<< HEAD
   private apiUrl = 'http://localhost:5000';  // Make sure this matches your Flask server address
-=======
-  private apiUrl = 'http://localhost:500';  // Make sure this matches your Flask server address
->>>>>>> 5b77e6dfa93ac3afc6bcdb9f2cbc823568fe114d
 
   constructor(private http: HttpClient) {}
 
