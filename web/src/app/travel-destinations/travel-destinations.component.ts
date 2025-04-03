@@ -1,7 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { NgFor, NgIf } from '@angular/common';
+import { NgFor, NgIf, AsyncPipe } from '@angular/common';
+import { ListingService } from '../listings.service';
+import { Observable, catchError, of, tap } from 'rxjs';
 
+// Make sure this interface matches your existing Listing interface
 interface Destination {
   id: string;
   name: string;
@@ -40,7 +43,14 @@ interface Category {
         </div>
       </div>
 
-      <div class="featured-destinations">
+      <!-- Loading Indicator -->
+      <div class="loading-indicator" *ngIf="loading">
+        <div class="loading-spinner"></div>
+        <p>Loading amazing destinations...</p>
+      </div>
+
+      <!-- Featured Destinations -->
+      <div class="featured-destinations" *ngIf="!loading">
         <h2>Featured Destinations</h2>
         <div class="destinations-grid">
           <div class="destination-card" *ngFor="let destination of featuredDestinations">
@@ -67,7 +77,8 @@ interface Category {
         </div>
       </div>
 
-      <div class="trending-cities">
+      <!-- Trending Cities -->
+      <div class="trending-cities" *ngIf="!loading">
         <h2>Trending Cities</h2>
         <div class="cities-grid">
           <div class="city-card" *ngFor="let city of trendingCities" (click)="exploreDestination(city.name)">
@@ -80,7 +91,8 @@ interface Category {
         </div>
       </div>
 
-      <div class="seasonal-picks">
+      <!-- Seasonal Picks -->
+      <div class="seasonal-picks" *ngIf="!loading">
         <h2>Spring Getaways</h2>
         <p>Perfect destinations for the spring season</p>
         <div class="seasonal-grid">
@@ -97,7 +109,8 @@ interface Category {
         </div>
       </div>
 
-      <div class="travel-inspiration">
+      <!-- Travel Inspiration -->
+      <div class="travel-inspiration" *ngIf="!loading">
         <h2>Travel Inspiration</h2>
         <div class="inspiration-grid">
           <div class="inspiration-card">
@@ -121,6 +134,18 @@ interface Category {
             <button class="inspiration-button" (click)="filterByCategory('countryside')">Explore</button>
           </div>
         </div>
+      </div>
+
+      <!-- Error State -->
+      <div class="error-state" *ngIf="errorMessage">
+        <div class="error-icon">
+          <svg viewBox="0 0 24 24" width="48" height="48">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+          </svg>
+        </div>
+        <h3>Oops! Something went wrong</h3>
+        <p>{{ errorMessage }}</p>
+        <button class="retry-button" (click)="loadAllData()">Try Again</button>
       </div>
     </div>
   `,
@@ -160,153 +185,250 @@ export class DestinationsComponent implements OnInit {
     }
   ];
 
-  featuredDestinations: Destination[] = [
-    {
-      id: '1',
-      name: 'Bali',
-      country: 'Indonesia',
-      image: 'assets/destinations/bali.jpg',
-      description: 'A tropical paradise with stunning beaches, lush rice terraces, and unique cultural experiences.',
-      avgPrice: '$85',
-      rating: 4.8,
-      popularFor: ['Beaches', 'Culture', 'Nightlife', 'Food'],
-      listingsCount: 1245
-    },
-    {
-      id: '2',
-      name: 'Paris',
-      country: 'France',
-      image: 'assets/destinations/paris.jpg',
-      description: 'The city of lights featuring iconic landmarks, world-class museums, and romantic ambiance.',
-      avgPrice: '$120',
-      rating: 4.7,
-      popularFor: ['Culture', 'Food', 'Art', 'Architecture'],
-      listingsCount: 1876
-    },
-    {
-      id: '3',
-      name: 'Kyoto',
-      country: 'Japan',
-      image: 'assets/destinations/kyoto.jpg',
-      description: 'A city rich in Japanese heritage with historic temples, traditional gardens, and serene atmospheres.',
-      avgPrice: '$95',
-      rating: 4.9,
-      popularFor: ['Culture', 'History', 'Nature', 'Food'],
-      listingsCount: 987
-    }
-  ];
+  featuredDestinations: Destination[] = [];
+  trendingCities: Destination[] = [];
+  seasonalPicks: Destination[] = [];
 
-  trendingCities: Destination[] = [
-    {
-      id: '4',
-      name: 'Barcelona',
-      country: 'Spain',
-      image: 'assets/destinations/barcelona.jpg',
-      description: 'A vibrant city with unique architecture, lively beaches, and world-famous cuisine.',
-      avgPrice: '$90',
-      rating: 4.6,
-      popularFor: ['Architecture', 'Beaches', 'Food', 'Nightlife'],
-      listingsCount: 1532
-    },
-    {
-      id: '5',
-      name: 'New York',
-      country: 'USA',
-      image: 'assets/destinations/newyork.jpg',
-      description: 'The city that never sleeps offers iconic skyscrapers, diverse neighborhoods, and endless entertainment.',
-      avgPrice: '$150',
-      rating: 4.7,
-      popularFor: ['Shopping', 'Culture', 'Food', 'Entertainment'],
-      listingsCount: 2180
-    },
-    {
-      id: '6',
-      name: 'Tokyo',
-      country: 'Japan',
-      image: 'assets/destinations/tokyo.jpg',
-      description: 'An ultra-modern metropolis with cutting-edge technology, traditional culture, and incredible food.',
-      avgPrice: '$110',
-      rating: 4.8,
-      popularFor: ['Technology', 'Shopping', 'Food', 'Culture'],
-      listingsCount: 1687
-    },
-    {
-      id: '7',
-      name: 'Rome',
-      country: 'Italy',
-      image: 'assets/destinations/rome.jpg',
-      description: 'The Eternal City showcases ancient history, artistic masterpieces, and delicious Italian cuisine.',
-      avgPrice: '$95',
-      rating: 4.7,
-      popularFor: ['History', 'Art', 'Food', 'Architecture'],
-      listingsCount: 1425
-    }
-  ];
+  loading: boolean = false;
+  errorMessage: string = '';
 
-  seasonalPicks: Destination[] = [
-    {
-      id: '8',
-      name: 'Amsterdam',
-      country: 'Netherlands',
-      image: 'assets/destinations/amsterdam.jpg',
-      description: 'Famous for its tulip season, picturesque canals, historic buildings, and vibrant culture.',
-      avgPrice: '$105',
-      rating: 4.6,
-      popularFor: ['Tulips', 'Canals', 'Cycling', 'Museums'],
-      listingsCount: 987
-    },
-    {
-      id: '9',
-      name: 'Kyoto',
-      country: 'Japan',
-      image: 'assets/destinations/kyoto-spring.jpg',
-      description: 'Experience the magic of cherry blossom season among historic temples and gardens.',
-      avgPrice: '$115',
-      rating: 4.9,
-      popularFor: ['Cherry Blossoms', 'Temples', 'Gardens', 'History'],
-      listingsCount: 1045
-    },
-    {
-      id: '10',
-      name: 'Provence',
-      country: 'France',
-      image: 'assets/destinations/provence.jpg',
-      description: 'Blooming lavender fields, charming villages, and Mediterranean climate make it a spring favorite.',
-      avgPrice: '$95',
-      rating: 4.7,
-      popularFor: ['Lavender', 'Countryside', 'Wine', 'Food'],
-      listingsCount: 765
-    },
-    {
-      id: '11',
-      name: 'Washington D.C.',
-      country: 'USA',
-      image: 'assets/destinations/washington.jpg',
-      description: 'Visit during the National Cherry Blossom Festival for stunning views and cultural celebrations.',
-      avgPrice: '$130',
-      rating: 4.5,
-      popularFor: ['Cherry Blossoms', 'Museums', 'History', 'Monuments'],
-      listingsCount: 892
-    }
-  ];
-
-  constructor(private router: Router) {}
+  constructor(
+    private router: Router,
+    private listingService: ListingService
+  ) {}
 
   ngOnInit() {
-    // Any additional initialization logic
+    this.loadAllData();
+  }
+
+  loadAllData() {
+    this.loading = true;
+    this.errorMessage = '';
+
+    // Load all data at once and handle with fallbacks
+    this.loadFeaturedDestinations();
+    this.loadTrendingCities();
+    this.loadSeasonalPicks();
+  }
+
+  loadFeaturedDestinations() {
+    this.loading = true;
+
+    // Using the standard listing service
+    this.listingService.getListings('', 3)
+      .subscribe({
+        next: (data) => {
+          this.featuredDestinations = this.convertListingsToDestinations(data);
+          this.loading = false;
+        },
+        error: (err) => {
+          console.error('Error loading featured destinations:', err);
+          this.featuredDestinations = this.convertListingsToDestinations(this.getFallbackFeaturedDestinations());
+          this.loading = false;
+        }
+      });
+  }
+
+  loadTrendingCities() {
+    this.listingService.searchListings({
+      limit: 4
+    })
+      .subscribe({
+        next: (data) => {
+          // Extract listings from the response
+          const listings = data.listings || [];
+          this.trendingCities = this.convertListingsToDestinations(listings);
+        },
+        error: (err) => {
+          console.error('Error loading trending cities:', err);
+          this.trendingCities = this.convertListingsToDestinations(this.getFallbackTrendingCities());
+        }
+      });
+  }
+
+  loadSeasonalPicks() {
+    this.listingService.searchListings({
+      limit: 4
+    })
+      .subscribe({
+        next: (data) => {
+          // Extract listings from the response
+          const listings = data.listings || [];
+          this.seasonalPicks = this.convertListingsToDestinations(listings);
+        },
+        error: (err) => {
+          console.error('Error loading seasonal picks:', err);
+          this.seasonalPicks = this.convertListingsToDestinations(this.getFallbackSeasonalPicks());
+        }
+      });
   }
 
   filterByCategory(categoryId: string) {
-    // Navigate to listings with category filter
     this.router.navigate(['/listings'], {
       queryParams: { category: categoryId }
     });
   }
 
   exploreDestination(destinationName: string) {
-    // Navigate to listings with destination filter
     this.router.navigate(['/listings'], {
       queryParams: { location: destinationName }
     });
+  }
+
+  // Helper method to convert backend listings to frontend destinations format
+  private convertListingsToDestinations(listings: any[]): Destination[] {
+    return listings.map(listing => {
+      // Extract price value (default to a placeholder if not available)
+      let avgPrice = listing.price || '$85';
+      if (avgPrice && !avgPrice.includes('$')) {
+        avgPrice = '$' + avgPrice;
+      }
+
+      // Parse rating to number (default to 4.5 if not available)
+      const rating = listing.rating ? parseFloat(listing.rating) : 4.5;
+
+      // Extract features as popular tags
+      const popularFor = listing.features && listing.features.length > 0
+        ? listing.features.slice(0, 4)
+        : ['Comfortable', 'Cozy'];
+
+      return {
+        id: listing._id || String(Math.random()),
+        name: listing.title?.split(' in ')[0] || listing.location || 'Beautiful Place',
+        country: listing.country || 'Unknown Country',
+        image: listing.picture_url || `assets/destinations/${Math.floor(Math.random() * 5) + 1}.jpg`,
+        description: listing.description || 'A wonderful place to stay with amazing amenities and a great location.',
+        avgPrice: avgPrice,
+        rating: rating,
+        popularFor: popularFor,
+        listingsCount: Math.floor(Math.random() * 1000) + 200 // Mock data for listings count
+      };
+    });
+  }
+
+  // Fallback data in case the API fails
+  private getFallbackFeaturedDestinations(): any[] {
+    return [
+      {
+        _id: '1',
+        title: 'Bali Beachfront Villa',
+        country: 'Indonesia',
+        picture_url: 'assets/destinations/bali.jpg',
+        description: 'A tropical paradise with stunning beaches, lush rice terraces, and unique cultural experiences.',
+        price: '$85',
+        rating: '4.8',
+        features: ['Beaches', 'Culture', 'Nightlife', 'Food']
+      },
+      {
+        _id: '2',
+        title: 'Paris Apartment',
+        country: 'France',
+        picture_url: 'assets/destinations/paris.jpg',
+        description: 'The city of lights featuring iconic landmarks, world-class museums, and romantic ambiance.',
+        price: '$120',
+        rating: '4.7',
+        features: ['Culture', 'Food', 'Art', 'Architecture']
+      },
+      {
+        _id: '3',
+        title: 'Kyoto Traditional Home',
+        country: 'Japan',
+        picture_url: 'assets/destinations/kyoto.jpg',
+        description: 'A city rich in Japanese heritage with historic temples, traditional gardens, and serene atmospheres.',
+        price: '$95',
+        rating: '4.9',
+        features: ['Culture', 'History', 'Nature', 'Food']
+      }
+    ];
+  }
+
+  private getFallbackTrendingCities(): any[] {
+    return [
+      {
+        _id: '4',
+        title: 'Barcelona Penthouse',
+        country: 'Spain',
+        picture_url: 'assets/destinations/barcelona.jpg',
+        description: 'A vibrant city with unique architecture, lively beaches, and world-famous cuisine.',
+        price: '$90',
+        rating: '4.6',
+        features: ['Architecture', 'Beaches', 'Food', 'Nightlife']
+      },
+      {
+        _id: '5',
+        title: 'New York Loft',
+        country: 'USA',
+        picture_url: 'assets/destinations/newyork.jpg',
+        description: 'The city that never sleeps offers iconic skyscrapers, diverse neighborhoods, and endless entertainment.',
+        price: '$150',
+        rating: '4.7',
+        features: ['Shopping', 'Culture', 'Food', 'Entertainment']
+      },
+      {
+        _id: '6',
+        title: 'Tokyo Modern Apartment',
+        country: 'Japan',
+        picture_url: 'assets/destinations/tokyo.jpg',
+        description: 'An ultra-modern metropolis with cutting-edge technology, traditional culture, and incredible food.',
+        price: '$110',
+        rating: '4.8',
+        features: ['Technology', 'Shopping', 'Food', 'Culture']
+      },
+      {
+        _id: '7',
+        title: 'Rome Historic Apartment',
+        country: 'Italy',
+        picture_url: 'assets/destinations/rome.jpg',
+        description: 'The Eternal City showcases ancient history, artistic masterpieces, and delicious Italian cuisine.',
+        price: '$95',
+        rating: '4.7',
+        features: ['History', 'Art', 'Food', 'Architecture']
+      }
+    ];
+  }
+
+  private getFallbackSeasonalPicks(): any[] {
+    return [
+      {
+        _id: '8',
+        title: 'Amsterdam Canal House',
+        country: 'Netherlands',
+        picture_url: 'assets/destinations/amsterdam.jpg',
+        description: 'Famous for its tulip season, picturesque canals, historic buildings, and vibrant culture.',
+        price: '$105',
+        rating: '4.6',
+        features: ['Tulips', 'Canals', 'Cycling', 'Museums']
+      },
+      {
+        _id: '9',
+        title: 'Kyoto Cherry Blossom View',
+        country: 'Japan',
+        picture_url: 'assets/destinations/kyoto-spring.jpg',
+        description: 'Experience the magic of cherry blossom season among historic temples and gardens.',
+        price: '$115',
+        rating: '4.9',
+        features: ['Cherry Blossoms', 'Temples', 'Gardens', 'History']
+      },
+      {
+        _id: '10',
+        title: 'Provence Cottage',
+        country: 'France',
+        picture_url: 'assets/destinations/provence.jpg',
+        description: 'Blooming lavender fields, charming villages, and Mediterranean climate make it a spring favorite.',
+        price: '$95',
+        rating: '4.7',
+        features: ['Lavender', 'Countryside', 'Wine', 'Food']
+      },
+      {
+        _id: '11',
+        title: 'Washington D.C. Townhouse',
+        country: 'USA',
+        picture_url: 'assets/destinations/washington.jpg',
+        description: 'Visit during the National Cherry Blossom Festival for stunning views and cultural celebrations.',
+        price: '$130',
+        rating: '4.5',
+        features: ['Cherry Blossoms', 'Museums', 'History', 'Monuments']
+      }
+    ];
   }
 }

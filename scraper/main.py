@@ -67,38 +67,29 @@ CORS(app,
      allow_headers=["Content-Type", "Authorization", "Access-Control-Allow-Origin",
                     "Access-Control-Allow-Headers", "Access-Control-Allow-Methods"])
 
-
-# Global after_request handler to add CORS headers to all responses
+# Instead of using flask_cors, let's manually handle CORS
 @app.after_request
 def add_cors_headers(response):
-    origin = request.headers.get('Origin')
-    if origin in ['http://localhost:6969', 'http://localhost:4200']:
-        response.headers.add('Access-Control-Allow-Origin', origin)
-    else:
-        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:6969')
-
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-    response.headers.add('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS')
-    response.headers.add('Access-Control-Allow-Credentials', 'true')
+    # Set a SINGLE Access-Control-Allow-Origin header
+    response.headers.set('Access-Control-Allow-Origin', 'http://localhost:6969')
+    response.headers.set('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+    response.headers.set('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS')
+    response.headers.set('Access-Control-Allow-Credentials', 'true')
     return response
 
-
-# Global OPTIONS route handler
+# Handle OPTIONS requests globally
 @app.route('/', defaults={'path': ''}, methods=['OPTIONS'])
 @app.route('/<path:path>', methods=['OPTIONS'])
 def options_handler(path):
     response = make_response()
-    origin = request.headers.get('Origin')
-    if origin in ['http://localhost:6969', 'http://localhost:4200']:
-        response.headers.add('Access-Control-Allow-Origin', origin)
-    else:
-        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:6969')
-
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-    response.headers.add('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS')
-    response.headers.add('Access-Control-Allow-Credentials', 'true')
+    response.headers.set('Access-Control-Allow-Origin', 'http://localhost:6969')
+    response.headers.set('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+    response.headers.set('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS')
+    response.headers.set('Access-Control-Allow-Credentials', 'true')
     return response
 
+# Now import blueprints AFTER setting up CORS handlers
+from auth_routes import auth_bp
 
 # Import database extensions and other modules
 import db_extensions
@@ -403,6 +394,7 @@ def get_city_data():
         browser.quit()
 
 
+# Route handlers with fixes
 @app.route('/get-listings', methods=['GET'])
 def get_listings():
     city = request.args.get('city')
@@ -413,8 +405,13 @@ def get_listings():
         query["location"] = {"$regex": city, "$options": "i"}
 
     try:
+        # Get listings from database
         listings = db.get_listings(DB_NAME, COLLECTION_NAME, query, limit)
-        return jsonify(listings)
+
+        # Convert to JSON using bson dumps to handle ObjectId correctly
+        listings_json = json.loads(dumps(listings))
+
+        return jsonify(listings_json)
     except Exception as e:
         logger.error(f"An error occurred while fetching listings: {e}")
         return jsonify({"error": "Failed to fetch listings"}), 500
@@ -434,7 +431,9 @@ def get_filters():
 
     try:
         filters_result = db.get_filters(DB_NAME, COLLECTION_NAME, query, limit)
-        return jsonify(filters_result)
+        # Convert to JSON properly
+        filters_json = json.loads(dumps(filters_result))
+        return jsonify(filters_json)
     except Exception as e:
         logger.error(f"An error occurred while fetching filters: {e}")
         return jsonify({"error": "Failed to fetch filters"}), 500
@@ -445,7 +444,9 @@ def get_listing(listing_id):
     try:
         listing = db.get_listing_by_id(DB_NAME, COLLECTION_NAME, listing_id)
         if listing:
-            return jsonify(listing)
+            # Convert to JSON properly
+            listing_json = json.loads(dumps(listing))
+            return jsonify(listing_json)
         else:
             return jsonify({"error": "Listing not found"}), 404
     except Exception as e:
@@ -465,12 +466,14 @@ def search_listings():
     price_max = request.args.get('priceMax', '')
     property_type = request.args.getlist('propertyType')
     amenities = request.args.getlist('amenities')
+    limit = request.args.get('limit', '')
 
     # Parse numeric parameters
     try:
         guests = int(guests) if guests else None
         price_min = float(price_min) if price_min else None
         price_max = float(price_max) if price_max else None
+        limit_num = int(limit) if limit else None
     except ValueError:
         return jsonify({"error": "Invalid numeric parameter"}), 400
 
@@ -500,19 +503,23 @@ def search_listings():
     per_page = int(request.args.get('pageSize', 20))
 
     try:
-        # Get total count
-        total_count = db_extensions.count_documents(DB_NAME, COLLECTION_NAME, query)
+        # If db_extensions is causing issues, use the regular db module
+        # Get total count - simple approach
+        collection = db.get_collection(DB_NAME, COLLECTION_NAME)
+        total_count = collection.count_documents(query)
 
         # Calculate pagination
         skip = (page - 1) * per_page
-        total_pages = (total_count + per_page - 1) // per_page
+        per_page_limit = limit_num if limit_num and limit_num < per_page else per_page
+        total_pages = (total_count + per_page_limit - 1) // per_page_limit
 
-        # Get listings
-        listings = db_extensions.get_listings_with_pagination(DB_NAME, COLLECTION_NAME, query, skip, per_page)
+        # Get listings with pagination
+        cursor = collection.find(query).skip(skip).limit(per_page_limit)
+        listings = list(cursor)
 
-        # Format response
+        # Format response - use dumps to handle ObjectId serialization
         response = {
-            "listings": listings,
+            "listings": json.loads(dumps(listings)),
             "totalCount": total_count,
             "pageCount": total_pages,
             "currentPage": page
@@ -521,8 +528,7 @@ def search_listings():
         return jsonify(response)
     except Exception as e:
         logger.error(f"An error occurred during search: {e}")
-        return jsonify({"error": "Failed to perform search"}), 500
-
+        return jsonify({"error": f"Failed to perform search: {str(e)}"}), 500
 
 # Add an info endpoint to check configuration
 @app.route('/info', methods=['GET'])

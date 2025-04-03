@@ -1,12 +1,51 @@
-// src/services/listing.service.ts
+// src/app/listings.service.ts
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Observable, throwError } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
 const environment = {
   production: false,
   apiUrl: 'http://localhost:5000'
 };
+
+export interface Listing {
+  _id: string;
+  url: string;
+  title: string;
+  picture_url: string;
+  description: string;
+  price: string;
+  rating: string;
+  location: string;
+  features: string[];
+  house_details: string[];
+  region?: string;
+  country?: string;
+  state?: string;
+  province?: string;
+}
+
+export interface SearchResponse {
+  listings: Listing[];
+  totalCount: number;
+  pageCount: number;
+  currentPage: number;
+}
+
+export interface SearchOptions {
+  location?: string;
+  checkIn?: string;
+  checkOut?: string;
+  guests?: number;
+  priceMin?: number;
+  priceMax?: number;
+  propertyType?: string[];
+  amenities?: string[];
+  page?: number;
+  pageSize?: number;
+  limit?: number;
+}
 
 @Injectable({
   providedIn: 'root'
@@ -16,104 +55,84 @@ export class ListingService {
 
   constructor(private http: HttpClient) {}
 
+  // Fixed error handler that returns an Observable
+  private handleError(error: any) {
+    console.error('API error in listing service', error);
+    return throwError(() => error);
+  }
+
   getListings(searchTerm?: string, limit?: number): Observable<any> {
-    const headers = {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Credentials': 'true',
-      'Access-Control-Allow-Headers': 'Content-Type',
-      'Access-Control-Allow-Methods': 'GET,POST,DELETE',
-    };
-
-    const options = {
-      headers: headers,
-      rejectUnauthorized: false,
-    };
-
-    let url = `${this.apiUrl}/get-listings`;
-    const params: string[] = [];
+    let params = new HttpParams();
 
     if (searchTerm) {
-      params.push(`city=${encodeURIComponent(searchTerm)}`);
+      params = params.set('city', searchTerm);
     }
 
     if (limit) {
-      params.push(`limit=${limit}`);
+      params = params.set('limit', limit.toString());
     }
 
-    if (params.length > 0) {
-      url += `?${params.join('&')}`;
-    }
-
-    return this.http.get(url, options);
+    return this.http.get(`${this.apiUrl}/get-listings`, { params })
+      .pipe(
+        catchError((error) => this.handleError(error))
+      );
   }
 
   scrapeNorthAmerica(): Observable<any> {
-    const headers = {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Credentials': 'true',
-      'Access-Control-Allow-Headers': 'Content-Type',
-      'Access-Control-Allow-Methods': 'GET,POST,DELETE',
-    };
-
-    const options = {
-      headers: headers,
-      rejectUnauthorized: false,
-    };
-
-    return this.http.get(`${this.apiUrl}/scrape-north-america`, options);
+    return this.http.get(`${this.apiUrl}/scrape-north-america`)
+      .pipe(
+        catchError((error) => this.handleError(error))
+      );
   }
 
   scrapeCity(city: string): Observable<any> {
-    const headers = {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Credentials': 'true',
-      'Access-Control-Allow-Headers': 'Content-Type',
-      'Access-Control-Allow-Methods': 'GET,POST,DELETE',
-    };
+    let params = new HttpParams().set('city', city);
 
-    const options = {
-      headers: headers,
-      rejectUnauthorized: false,
-    };
-
-    return this.http.get(`${this.apiUrl}/scrape-city-data?city=${encodeURIComponent(city)}`, options);
+    return this.http.get(`${this.apiUrl}/scrape-city-data`, { params })
+      .pipe(
+        catchError((error) => this.handleError(error))
+      );
   }
 
-  searchListings(params: any): Observable<any> {
-    const headers = {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Credentials': 'true',
-      'Access-Control-Allow-Headers': 'Content-Type',
-      'Access-Control-Allow-Methods': 'GET,POST,DELETE',
-    };
+  searchListings(options: SearchOptions): Observable<SearchResponse> {
+    let params = new HttpParams();
 
-    const options = {
-      headers: headers,
-      rejectUnauthorized: false,
-      params: params
-    };
+    // Add string parameters
+    if (options.location) params = params.set('location', options.location);
+    if (options.checkIn) params = params.set('checkIn', options.checkIn);
+    if (options.checkOut) params = params.set('checkOut', options.checkOut);
 
-    return this.http.get(`${this.apiUrl}/search`, options);
+    // Add number parameters
+    if (options.guests) params = params.set('guests', options.guests.toString());
+    if (options.priceMin) params = params.set('priceMin', options.priceMin.toString());
+    if (options.priceMax) params = params.set('priceMax', options.priceMax.toString());
+    if (options.page) params = params.set('page', options.page.toString());
+    if (options.pageSize) params = params.set('pageSize', options.pageSize.toString());
+    if (options.limit) params = params.set('limit', options.limit.toString());
+
+    // Handle array parameters
+    if (options.propertyType && options.propertyType.length > 0) {
+      options.propertyType.forEach((type: string) => {
+        params = params.append('propertyType', type);
+      });
+    }
+
+    if (options.amenities && options.amenities.length > 0) {
+      options.amenities.forEach((amenity: string) => {
+        params = params.append('amenities', amenity);
+      });
+    }
+
+    return this.http.get<SearchResponse>(`${this.apiUrl}/search`, { params })
+      .pipe(
+        catchError((error) => this.handleError(error))
+      );
   }
 
   getListingById(id: string): Observable<any> {
-    const headers = {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Credentials': 'true',
-      'Access-Control-Allow-Headers': 'Content-Type',
-      'Access-Control-Allow-Methods': 'GET,POST,DELETE',
-    };
-
-    const options = {
-      headers: headers,
-      rejectUnauthorized: false,
-    };
-
-    return this.http.get(`${this.apiUrl}/get-listing/${id}`, options);
+    return this.http.get(`${this.apiUrl}/get-listing/${id}`)
+      .pipe(
+        catchError((error) => this.handleError(error))
+      );
   }
 }

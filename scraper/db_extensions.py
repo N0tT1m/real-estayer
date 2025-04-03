@@ -4,34 +4,49 @@ from bson import ObjectId
 import logging
 import datetime
 import math
+import logging
+import db
 
-# Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
+def count_documents(db_name, collection_name, query={}):
+    """Count documents that match a query"""
+    try:
+        collection = db.get_collection(db_name, collection_name)
+        return collection.count_documents(query)
+    except Exception as e:
+        logger.error(f"Error counting documents: {str(e)}")
+        return 0
 
-# These functions extend the db.py file to support the new functionality
+def get_listings_with_pagination(db_name, collection_name, query={}, skip=0, limit=20):
+    """Get listings with pagination"""
+    try:
+        collection = db.get_collection(db_name, collection_name)
+        cursor = collection.find(query).skip(skip).limit(limit)
+        return list(cursor)
+    except Exception as e:
+        logger.error(f"Error getting paginated listings: {str(e)}")
+        return []
 
 def get_user_by_email(db_name, collection_name, email):
     """Get a user by email"""
-    from db import db_manager
     try:
-        db_manager.connect()
-        collection = db_manager.get_collection(db_name, collection_name)
+        db.connect()
+        collection = db.get_collection(db_name, collection_name)
         user = collection.find_one({'email': email})
         return user
     except Exception as e:
         logging.error(f"An error occurred while fetching user by email: {e}")
         return None
     finally:
-        db_manager.close_connection()
+        db.close_connection()
 
 
 def get_reviews_for_listings(db_name, collection_name, listing_ids):
     """Get reviews for a list of listings"""
-    from db import db_manager
     try:
-        db_manager.connect()
-        collection = db_manager.get_collection(db_name, collection_name)
+        db.connect()
+        collection = db.get_collection(db_name, collection_name)
         reviews = list(collection.find({'listingId': {'$in': listing_ids}}).sort('date', DESCENDING))
 
         # Convert ObjectIds to strings
@@ -44,19 +59,18 @@ def get_reviews_for_listings(db_name, collection_name, listing_ids):
         logging.error(f"An error occurred while fetching reviews for listings: {e}")
         return []
     finally:
-        db_manager.close_connection()
+        db.close_connection()
 
 
 def update_listing_review_stats(db_name, collection_name, listing_id):
     """Update a listing's review count and average rating"""
-    from db import db_manager
 
     # Get review stats first
     stats = get_listing_review_stats(db_name, "reviews", listing_id)
 
     try:
-        db_manager.connect()
-        collection = db_manager.get_collection(db_name, collection_name)
+        db.connect()
+        collection = db.get_collection(db_name, collection_name)
         result = collection.update_one(
             {'_id': ObjectId(listing_id)},
             {'$set': {
@@ -70,29 +84,27 @@ def update_listing_review_stats(db_name, collection_name, listing_id):
         logging.error(f"An error occurred while updating listing review stats: {e}")
         return False
     finally:
-        db_manager.close_connection()
+        db.close_connection()
 
 
 def count_documents(db_name, collection_name, query=None):
-    """Count documents in a collection with an optional query"""
-    from db import db_manager
     try:
-        db_manager.connect()
-        collection = db_manager.get_collection(db_name, collection_name)
+        db.connect()
+        collection = db.get_collection(db_name, collection_name)
         return collection.count_documents(query or {})
     except Exception as e:
         logging.error(f"An error occurred while counting documents: {e}")
         return 0
     finally:
-        db_manager.close_connection()
+        db.close_connection()
 
 
 def get_listings_with_pagination(db_name, collection_name, query=None, skip=0, limit=20):
     """Get listings with pagination"""
-    from db import db_manager
+    
     try:
-        db_manager.connect()
-        collection = db_manager.get_collection(db_name, collection_name)
+        db.connect()
+        collection = db.get_collection(db_name, collection_name)
         cursor = collection.find(query or {}).skip(skip).limit(limit)
 
         # Convert MongoDB documents to JSON-serializable format
@@ -107,45 +119,45 @@ def get_listings_with_pagination(db_name, collection_name, query=None, skip=0, l
         logging.error(f"An error occurred while fetching listings with pagination: {e}")
         return []
     finally:
-        db_manager.close_connection()
+        db.close_connection()
 
 
 def get_user_by_id(db_name, collection_name, user_id):
     """Get a user by ID"""
-    from db import db_manager
+    
     try:
-        db_manager.connect()
-        collection = db_manager.get_collection(db_name, collection_name)
+        db.connect()
+        collection = db.get_collection(db_name, collection_name)
         user = collection.find_one({'_id': ObjectId(user_id)})
         return user
     except Exception as e:
         logging.error(f"An error occurred while fetching user by ID: {e}")
         return None
     finally:
-        db_manager.close_connection()
+        db.close_connection()
 
 
 def insert_one_into_collection(db_name, collection_name, document):
     """Insert a single document into a collection"""
-    from db import db_manager
+    
     try:
-        db_manager.connect()
-        collection = db_manager.get_collection(db_name, collection_name)
+        db.connect()
+        collection = db.get_collection(db_name, collection_name)
         result = collection.insert_one(document)
         return str(result.inserted_id)
     except Exception as e:
         logging.error(f"An error occurred while inserting document: {e}")
         return None
     finally:
-        db_manager.close_connection()
+        db.close_connection()
 
 
 def update_user(db_name, collection_name, user_id, update_data):
     """Update a user document"""
-    from db import db_manager
+    
     try:
-        db_manager.connect()
-        collection = db_manager.get_collection(db_name, collection_name)
+        db.connect()
+        collection = db.get_collection(db_name, collection_name)
         result = collection.update_one(
             {'_id': ObjectId(user_id)},
             {'$set': update_data}
@@ -155,15 +167,15 @@ def update_user(db_name, collection_name, user_id, update_data):
         logging.error(f"An error occurred while updating user: {e}")
         return False
     finally:
-        db_manager.close_connection()
+        db.close_connection()
 
 
 def update_user_password(db_name, collection_name, user_id, new_password):
     """Update a user's password"""
-    from db import db_manager
+    
     try:
-        db_manager.connect()
-        collection = db_manager.get_collection(db_name, collection_name)
+        db.connect()
+        collection = db.get_collection(db_name, collection_name)
         result = collection.update_one(
             {'_id': ObjectId(user_id)},
             {'$set': {'password': new_password}}
@@ -173,15 +185,15 @@ def update_user_password(db_name, collection_name, user_id, new_password):
         logging.error(f"An error occurred while updating user password: {e}")
         return False
     finally:
-        db_manager.close_connection()
+        db.close_connection()
 
 
 def mark_user_for_deletion(db_name, collection_name, user_id):
     """Mark a user for deletion"""
-    from db import db_manager
+    
     try:
-        db_manager.connect()
-        collection = db_manager.get_collection(db_name, collection_name)
+        db.connect()
+        collection = db.get_collection(db_name, collection_name)
         result = collection.update_one(
             {'_id': ObjectId(user_id)},
             {'$set': {
@@ -194,15 +206,15 @@ def mark_user_for_deletion(db_name, collection_name, user_id):
         logging.error(f"An error occurred while marking user for deletion: {e}")
         return False
     finally:
-        db_manager.close_connection()
+        db.close_connection()
 
 
 def add_saved_listing(db_name, collection_name, user_id, listing_id):
     """Add a listing to a user's saved listings"""
-    from db import db_manager
+    
     try:
-        db_manager.connect()
-        collection = db_manager.get_collection(db_name, collection_name)
+        db.connect()
+        collection = db.get_collection(db_name, collection_name)
         result = collection.update_one(
             {'_id': ObjectId(user_id)},
             {'$addToSet': {'savedListings': listing_id}}
@@ -212,15 +224,15 @@ def add_saved_listing(db_name, collection_name, user_id, listing_id):
         logging.error(f"An error occurred while adding saved listing: {e}")
         return False
     finally:
-        db_manager.close_connection()
+        db.close_connection()
 
 
 def remove_saved_listing(db_name, collection_name, user_id, listing_id):
     """Remove a listing from a user's saved listings"""
-    from db import db_manager
+    
     try:
-        db_manager.connect()
-        collection = db_manager.get_collection(db_name, collection_name)
+        db.connect()
+        collection = db.get_collection(db_name, collection_name)
         result = collection.update_one(
             {'_id': ObjectId(user_id)},
             {'$pull': {'savedListings': listing_id}}
@@ -230,15 +242,15 @@ def remove_saved_listing(db_name, collection_name, user_id, listing_id):
         logging.error(f"An error occurred while removing saved listing: {e}")
         return False
     finally:
-        db_manager.close_connection()
+        db.close_connection()
 
 
 def get_listings_by_ids(db_name, collection_name, listing_ids):
     """Get listings by their IDs"""
-    from db import db_manager
+    
     try:
-        db_manager.connect()
-        collection = db_manager.get_collection(db_name, collection_name)
+        db.connect()
+        collection = db.get_collection(db_name, collection_name)
         listings = list(collection.find({'_id': {'$in': [ObjectId(id) for id in listing_ids]}}))
 
         # Convert ObjectIds to strings
@@ -251,15 +263,15 @@ def get_listings_by_ids(db_name, collection_name, listing_ids):
         logging.error(f"An error occurred while fetching listings by IDs: {e}")
         return []
     finally:
-        db_manager.close_connection()
+        db.close_connection()
 
 
 def get_user_trips(db_name, collection_name, user_id, status=None):
     """Get trips for a user, optionally filtered by status"""
-    from db import db_manager
+    
     try:
-        db_manager.connect()
-        collection = db_manager.get_collection(db_name, collection_name)
+        db.connect()
+        collection = db.get_collection(db_name, collection_name)
 
         query = {'userId': user_id}
         if status:
@@ -277,15 +289,15 @@ def get_user_trips(db_name, collection_name, user_id, status=None):
         logging.error(f"An error occurred while fetching user trips: {e}")
         return []
     finally:
-        db_manager.close_connection()
+        db.close_connection()
 
 
 def get_trip_by_id(db_name, collection_name, trip_id):
     """Get a trip by ID"""
-    from db import db_manager
+    
     try:
-        db_manager.connect()
-        collection = db_manager.get_collection(db_name, collection_name)
+        db.connect()
+        collection = db.get_collection(db_name, collection_name)
         trip = collection.find_one({'_id': ObjectId(trip_id)})
 
         if trip:
@@ -297,15 +309,15 @@ def get_trip_by_id(db_name, collection_name, trip_id):
         logging.error(f"An error occurred while fetching trip by ID: {e}")
         return None
     finally:
-        db_manager.close_connection()
+        db.close_connection()
 
 
 def update_trip_status(db_name, collection_name, trip_id, status):
     """Update a trip's status"""
-    from db import db_manager
+    
     try:
-        db_manager.connect()
-        collection = db_manager.get_collection(db_name, collection_name)
+        db.connect()
+        collection = db.get_collection(db_name, collection_name)
         result = collection.update_one(
             {'_id': ObjectId(trip_id)},
             {'$set': {'status': status}}
@@ -315,15 +327,15 @@ def update_trip_status(db_name, collection_name, trip_id, status):
         logging.error(f"An error occurred while updating trip status: {e}")
         return False
     finally:
-        db_manager.close_connection()
+        db.close_connection()
 
 
 def get_user_payment_methods(db_name, collection_name, user_id):
     """Get payment methods for a user"""
-    from db import db_manager
+    
     try:
-        db_manager.connect()
-        collection = db_manager.get_collection(db_name, collection_name)
+        db.connect()
+        collection = db.get_collection(db_name, collection_name)
         payment_methods = list(collection.find({'userId': user_id}))
 
         # Convert ObjectIds to strings
@@ -336,15 +348,15 @@ def get_user_payment_methods(db_name, collection_name, user_id):
         logging.error(f"An error occurred while fetching user payment methods: {e}")
         return []
     finally:
-        db_manager.close_connection()
+        db.close_connection()
 
 
 def get_payment_method_by_id(db_name, collection_name, payment_method_id):
     """Get a payment method by ID"""
-    from db import db_manager
+    
     try:
-        db_manager.connect()
-        collection = db_manager.get_collection(db_name, collection_name)
+        db.connect()
+        collection = db.get_collection(db_name, collection_name)
         payment_method = collection.find_one({'_id': ObjectId(payment_method_id)})
 
         if payment_method:
@@ -356,15 +368,15 @@ def get_payment_method_by_id(db_name, collection_name, payment_method_id):
         logging.error(f"An error occurred while fetching payment method by ID: {e}")
         return None
     finally:
-        db_manager.close_connection()
+        db.close_connection()
 
 
 def set_default_payment_method(db_name, collection_name, user_id, payment_method_id):
     """Set a payment method as default for a user"""
-    from db import db_manager
+    
     try:
-        db_manager.connect()
-        collection = db_manager.get_collection(db_name, collection_name)
+        db.connect()
+        collection = db.get_collection(db_name, collection_name)
 
         # First, unset default for all payment methods
         collection.update_many(
@@ -383,30 +395,30 @@ def set_default_payment_method(db_name, collection_name, user_id, payment_method
         logging.error(f"An error occurred while setting default payment method: {e}")
         return False
     finally:
-        db_manager.close_connection()
+        db.close_connection()
 
 
 def remove_payment_method(db_name, collection_name, payment_method_id):
     """Remove a payment method"""
-    from db import db_manager
+    
     try:
-        db_manager.connect()
-        collection = db_manager.get_collection(db_name, collection_name)
+        db.connect()
+        collection = db.get_collection(db_name, collection_name)
         result = collection.delete_one({'_id': ObjectId(payment_method_id)})
         return result.deleted_count > 0
     except Exception as e:
         logging.error(f"An error occurred while removing payment method: {e}")
         return False
     finally:
-        db_manager.close_connection()
+        db.close_connection()
 
 
 def update_notification_preferences(db_name, collection_name, user_id, preferences):
     """Update a user's notification preferences"""
-    from db import db_manager
+    
     try:
-        db_manager.connect()
-        collection = db_manager.get_collection(db_name, collection_name)
+        db.connect()
+        collection = db.get_collection(db_name, collection_name)
         result = collection.update_one(
             {'_id': ObjectId(user_id)},
             {'$set': {'notificationPreferences': preferences}}
@@ -416,15 +428,15 @@ def update_notification_preferences(db_name, collection_name, user_id, preferenc
         logging.error(f"An error occurred while updating notification preferences: {e}")
         return False
     finally:
-        db_manager.close_connection()
+        db.close_connection()
 
 
 def get_user_itineraries(db_name, collection_name, user_id):
     """Get all itineraries for a user"""
-    from db import db_manager
+    
     try:
-        db_manager.connect()
-        collection = db_manager.get_collection(db_name, collection_name)
+        db.connect()
+        collection = db.get_collection(db_name, collection_name)
         itineraries = list(collection.find({'userId': user_id}).sort('createdAt', DESCENDING))
 
         # Convert ObjectIds to strings
@@ -437,15 +449,15 @@ def get_user_itineraries(db_name, collection_name, user_id):
         logging.error(f"An error occurred while fetching user itineraries: {e}")
         return []
     finally:
-        db_manager.close_connection()
+        db.close_connection()
 
 
 def get_itinerary_by_id(db_name, collection_name, itinerary_id):
     """Get an itinerary by ID"""
-    from db import db_manager
+    
     try:
-        db_manager.connect()
-        collection = db_manager.get_collection(db_name, collection_name)
+        db.connect()
+        collection = db.get_collection(db_name, collection_name)
         itinerary = collection.find_one({'_id': ObjectId(itinerary_id)})
 
         if itinerary:
@@ -457,15 +469,15 @@ def get_itinerary_by_id(db_name, collection_name, itinerary_id):
         logging.error(f"An error occurred while fetching itinerary by ID: {e}")
         return None
     finally:
-        db_manager.close_connection()
+        db.close_connection()
 
 
 def update_itinerary(db_name, collection_name, itinerary_id, update_data):
     """Update an itinerary"""
-    from db import db_manager
+    
     try:
-        db_manager.connect()
-        collection = db_manager.get_collection(db_name, collection_name)
+        db.connect()
+        collection = db.get_collection(db_name, collection_name)
         result = collection.update_one(
             {'_id': ObjectId(itinerary_id)},
             {'$set': update_data}
@@ -475,30 +487,30 @@ def update_itinerary(db_name, collection_name, itinerary_id, update_data):
         logging.error(f"An error occurred while updating itinerary: {e}")
         return False
     finally:
-        db_manager.close_connection()
+        db.close_connection()
 
 
 def delete_itinerary(db_name, collection_name, itinerary_id):
     """Delete an itinerary"""
-    from db import db_manager
+    
     try:
-        db_manager.connect()
-        collection = db_manager.get_collection(db_name, collection_name)
+        db.connect()
+        collection = db.get_collection(db_name, collection_name)
         result = collection.delete_one({'_id': ObjectId(itinerary_id)})
         return result.deleted_count > 0
     except Exception as e:
         logging.error(f"An error occurred while deleting itinerary: {e}")
         return False
     finally:
-        db_manager.close_connection()
+        db.close_connection()
 
 
 def add_activity_to_itinerary(db_name, collection_name, itinerary_id, activity):
     """Add an activity to an itinerary"""
-    from db import db_manager
+    
     try:
-        db_manager.connect()
-        collection = db_manager.get_collection(db_name, collection_name)
+        db.connect()
+        collection = db.get_collection(db_name, collection_name)
         result = collection.update_one(
             {'_id': ObjectId(itinerary_id)},
             {
@@ -511,15 +523,15 @@ def add_activity_to_itinerary(db_name, collection_name, itinerary_id, activity):
         logging.error(f"An error occurred while adding activity to itinerary: {e}")
         return False
     finally:
-        db_manager.close_connection()
+        db.close_connection()
 
 
 def update_activity_in_itinerary(db_name, collection_name, itinerary_id, activity_id, update_data):
     """Update an activity in an itinerary"""
-    from db import db_manager
+    
     try:
-        db_manager.connect()
-        collection = db_manager.get_collection(db_name, collection_name)
+        db.connect()
+        collection = db.get_collection(db_name, collection_name)
 
         # Build update operations for each field
         update_operations = {}
@@ -541,15 +553,15 @@ def update_activity_in_itinerary(db_name, collection_name, itinerary_id, activit
         logging.error(f"An error occurred while updating activity in itinerary: {e}")
         return False
     finally:
-        db_manager.close_connection()
+        db.close_connection()
 
 
 def delete_activity_from_itinerary(db_name, collection_name, itinerary_id, activity_id):
     """Delete an activity from an itinerary"""
-    from db import db_manager
+    
     try:
-        db_manager.connect()
-        collection = db_manager.get_collection(db_name, collection_name)
+        db.connect()
+        collection = db.get_collection(db_name, collection_name)
         result = collection.update_one(
             {'_id': ObjectId(itinerary_id)},
             {
@@ -562,15 +574,15 @@ def delete_activity_from_itinerary(db_name, collection_name, itinerary_id, activ
         logging.error(f"An error occurred while deleting activity from itinerary: {e}")
         return False
     finally:
-        db_manager.close_connection()
+        db.close_connection()
 
 
 def add_accommodation_to_itinerary(db_name, collection_name, itinerary_id, accommodation):
     """Add an accommodation to an itinerary"""
-    from db import db_manager
+    
     try:
-        db_manager.connect()
-        collection = db_manager.get_collection(db_name, collection_name)
+        db.connect()
+        collection = db.get_collection(db_name, collection_name)
         result = collection.update_one(
             {'_id': ObjectId(itinerary_id)},
             {
@@ -583,15 +595,15 @@ def add_accommodation_to_itinerary(db_name, collection_name, itinerary_id, accom
         logging.error(f"An error occurred while adding accommodation to itinerary: {e}")
         return False
     finally:
-        db_manager.close_connection()
+        db.close_connection()
 
 
 def add_transportation_to_itinerary(db_name, collection_name, itinerary_id, transportation):
     """Add transportation to an itinerary"""
-    from db import db_manager
+    
     try:
-        db_manager.connect()
-        collection = db_manager.get_collection(db_name, collection_name)
+        db.connect()
+        collection = db.get_collection(db_name, collection_name)
         result = collection.update_one(
             {'_id': ObjectId(itinerary_id)},
             {
@@ -604,15 +616,15 @@ def add_transportation_to_itinerary(db_name, collection_name, itinerary_id, tran
         logging.error(f"An error occurred while adding transportation to itinerary: {e}")
         return False
     finally:
-        db_manager.close_connection()
+        db.close_connection()
 
 
 def update_accommodation_in_itinerary(db_name, collection_name, itinerary_id, accommodation_id, update_data):
     """Update an accommodation in an itinerary"""
-    from db import db_manager
+    
     try:
-        db_manager.connect()
-        collection = db_manager.get_collection(db_name, collection_name)
+        db.connect()
+        collection = db.get_collection(db_name, collection_name)
 
         # Build update operations for each field
         update_operations = {}
@@ -634,15 +646,15 @@ def update_accommodation_in_itinerary(db_name, collection_name, itinerary_id, ac
         logging.error(f"An error occurred while updating accommodation in itinerary: {e}")
         return False
     finally:
-        db_manager.close_connection()
+        db.close_connection()
 
 
 def delete_accommodation_from_itinerary(db_name, collection_name, itinerary_id, accommodation_id):
     """Delete an accommodation from an itinerary"""
-    from db import db_manager
+    
     try:
-        db_manager.connect()
-        collection = db_manager.get_collection(db_name, collection_name)
+        db.connect()
+        collection = db.get_collection(db_name, collection_name)
         result = collection.update_one(
             {'_id': ObjectId(itinerary_id)},
             {
@@ -655,15 +667,15 @@ def delete_accommodation_from_itinerary(db_name, collection_name, itinerary_id, 
         logging.error(f"An error occurred while deleting accommodation from itinerary: {e}")
         return False
     finally:
-        db_manager.close_connection()
+        db.close_connection()
 
 
 def update_transportation_in_itinerary(db_name, collection_name, itinerary_id, transportation_id, update_data):
     """Update transportation in an itinerary"""
-    from db import db_manager
+    
     try:
-        db_manager.connect()
-        collection = db_manager.get_collection(db_name, collection_name)
+        db.connect()
+        collection = db.get_collection(db_name, collection_name)
 
         # Build update operations for each field
         update_operations = {}
@@ -685,15 +697,15 @@ def update_transportation_in_itinerary(db_name, collection_name, itinerary_id, t
         logging.error(f"An error occurred while updating transportation in itinerary: {e}")
         return False
     finally:
-        db_manager.close_connection()
+        db.close_connection()
 
 
 def delete_transportation_from_itinerary(db_name, collection_name, itinerary_id, transportation_id):
     """Delete transportation from an itinerary"""
-    from db import db_manager
+    
     try:
-        db_manager.connect()
-        collection = db_manager.get_collection(db_name, collection_name)
+        db.connect()
+        collection = db.get_collection(db_name, collection_name)
         result = collection.update_one(
             {'_id': ObjectId(itinerary_id)},
             {
@@ -706,15 +718,15 @@ def delete_transportation_from_itinerary(db_name, collection_name, itinerary_id,
         logging.error(f"An error occurred while deleting transportation from itinerary: {e}")
         return False
     finally:
-        db_manager.close_connection()
+        db.close_connection()
 
 
 def has_user_stayed_at_listing(db_name, collection_name, user_id, listing_id):
     """Check if a user has stayed at a listing (completed trip)"""
-    from db import db_manager
+    
     try:
-        db_manager.connect()
-        collection = db_manager.get_collection(db_name, collection_name)
+        db.connect()
+        collection = db.get_collection(db_name, collection_name)
         count = collection.count_documents({
             'userId': user_id,
             'listingId': listing_id,
@@ -725,15 +737,15 @@ def has_user_stayed_at_listing(db_name, collection_name, user_id, listing_id):
         logging.error(f"An error occurred while checking if user stayed at listing: {e}")
         return False
     finally:
-        db_manager.close_connection()
+        db.close_connection()
 
 
 def get_user_review_for_listing(db_name, collection_name, user_id, listing_id):
     """Get a user's review for a specific listing"""
-    from db import db_manager
+    
     try:
-        db_manager.connect()
-        collection = db_manager.get_collection(db_name, collection_name)
+        db.connect()
+        collection = db.get_collection(db_name, collection_name)
         review = collection.find_one({
             'userId': user_id,
             'listingId': listing_id
@@ -748,15 +760,15 @@ def get_user_review_for_listing(db_name, collection_name, user_id, listing_id):
         logging.error(f"An error occurred while fetching user review for listing: {e}")
         return None
     finally:
-        db_manager.close_connection()
+        db.close_connection()
 
 
 def get_listing_reviews(db_name, collection_name, listing_id, page=1, per_page=10, rating=0):
     """Get reviews for a specific listing with pagination and rating filter"""
-    from db import db_manager
+    
     try:
-        db_manager.connect()
-        collection = db_manager.get_collection(db_name, collection_name)
+        db.connect()
+        collection = db.get_collection(db_name, collection_name)
 
         # Build query
         query = {'listingId': listing_id}
@@ -790,15 +802,15 @@ def get_listing_reviews(db_name, collection_name, listing_id, page=1, per_page=1
         logging.error(f"An error occurred while fetching listing reviews: {e}")
         return {'reviews': [], 'totalCount': 0, 'pageCount': 0}
     finally:
-        db_manager.close_connection()
+        db.close_connection()
 
 
 def get_listing_review_stats(db_name, collection_name, listing_id):
     """Get review statistics for a listing"""
-    from db import db_manager
+    
     try:
-        db_manager.connect()
-        collection = db_manager.get_collection(db_name, collection_name)
+        db.connect()
+        collection = db.get_collection(db_name, collection_name)
 
         # Get count of reviews by rating
         rating_counts = {}
@@ -864,15 +876,15 @@ def get_listing_review_stats(db_name, collection_name, listing_id):
             'categoryAverages': {}
         }
     finally:
-        db_manager.close_connection()
+        db.close_connection()
 
 
 def get_review_by_id(db_name, collection_name, review_id):
     """Get a review by ID"""
-    from db import db_manager
+    
     try:
-        db_manager.connect()
-        collection = db_manager.get_collection(db_name, collection_name)
+        db.connect()
+        collection = db.get_collection(db_name, collection_name)
         review = collection.find_one({'_id': ObjectId(review_id)})
 
         if review:
@@ -884,15 +896,15 @@ def get_review_by_id(db_name, collection_name, review_id):
         logging.error(f"An error occurred while fetching review by ID: {e}")
         return None
     finally:
-        db_manager.close_connection()
+        db.close_connection()
 
 
 def increment_review_helpful_count(db_name, collection_name, review_id):
     """Increment the helpful count for a review"""
-    from db import db_manager
+    
     try:
-        db_manager.connect()
-        collection = db_manager.get_collection(db_name, collection_name)
+        db.connect()
+        collection = db.get_collection(db_name, collection_name)
         result = collection.update_one(
             {'_id': ObjectId(review_id)},
             {'$inc': {'helpfulCount': 1}}
@@ -902,15 +914,15 @@ def increment_review_helpful_count(db_name, collection_name, review_id):
         logging.error(f"An error occurred while incrementing review helpful count: {e}")
         return False
     finally:
-        db_manager.close_connection()
+        db.close_connection()
 
 
 def add_response_to_review(db_name, collection_name, review_id, response):
     """Add a host response to a review"""
-    from db import db_manager
+    
     try:
-        db_manager.connect()
-        collection = db_manager.get_collection(db_name, collection_name)
+        db.connect()
+        collection = db.get_collection(db_name, collection_name)
         result = collection.update_one(
             {'_id': ObjectId(review_id)},
             {'$set': {'response': response}}
@@ -920,15 +932,15 @@ def add_response_to_review(db_name, collection_name, review_id, response):
         logging.error(f"An error occurred while adding response to review: {e}")
         return False
     finally:
-        db_manager.close_connection()
+        db.close_connection()
 
 
 def get_reviews_by_user(db_name, collection_name, user_id):
     """Get reviews written by a user"""
-    from db import db_manager
+    
     try:
-        db_manager.connect()
-        collection = db_manager.get_collection(db_name, collection_name)
+        db.connect()
+        collection = db.get_collection(db_name, collection_name)
         reviews = list(collection.find({'userId': user_id}).sort('date', DESCENDING))
 
         # Convert ObjectIds to strings
@@ -941,4 +953,4 @@ def get_reviews_by_user(db_name, collection_name, user_id):
         logging.error(f"An error occurred while fetching reviews by user: {e}")
         return []
     finally:
-        db_manager.close_connection()
+        db.close_connection()

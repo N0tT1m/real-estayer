@@ -5,7 +5,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 # MongoDB connection
-MONGO_URI = "mongodb://localhost:27017/"
+MONGO_URI = "mongodb://192.168.1.71:27017/"
 client = pymongo.MongoClient(MONGO_URI)
 
 

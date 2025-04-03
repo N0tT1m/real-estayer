@@ -7,7 +7,7 @@ from bson.json_util import dumps
 import json
 import logging
 from functools import wraps
-import db  # Import the db module with our fixed functions
+import db
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -21,8 +21,10 @@ TOKEN_EXPIRY = 24 * 60 * 60  # 24 hours in seconds
 DB_NAME = "airbnb"
 USERS_COLLECTION = "users"
 
+# At the top of auth_routes.py, change your import to explicitly use PyJWT
+import jwt as pyjwt  # Rename to avoid confusion
 
-# Helper functions
+# Then update your generate_token function:
 def generate_token(user_id):
     """Generate a JWT token for the given user ID"""
     payload = {
@@ -30,8 +32,7 @@ def generate_token(user_id):
         'iat': datetime.datetime.utcnow(),
         'sub': str(user_id)
     }
-    return jwt.encode(payload, SECRET_KEY, algorithm='HS256')
-
+    return pyjwt.encode(payload, SECRET_KEY, algorithm='HS256')
 
 def token_required(f):
     """Decorator to ensure a valid token is provided with the request"""
@@ -67,6 +68,18 @@ def token_required(f):
         return f(*args, **kwargs)
 
     return decorated
+
+
+def handle_preflight():
+    """Handle OPTIONS preflight requests with proper CORS headers"""
+    logger.debug("Handling preflight request")
+    response = make_response()
+    # Use set() not add() to avoid duplicates
+    response.headers.set('Access-Control-Allow-Origin', 'http://localhost:6969')
+    response.headers.set('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+    response.headers.set('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS')
+    response.headers.set('Access-Control-Allow-Credentials', 'true')
+    return response
 
 
 @auth_bp.route('/signup', methods=['POST', 'OPTIONS'])
@@ -167,8 +180,8 @@ def signup():
 
         # Create response with CORS headers
         response = make_response(jsonify(response_data), 201)
-        response.headers.add('Access-Control-Allow-Origin', request.headers.get('Origin', '*'))
-        response.headers.add('Access-Control-Allow-Credentials', 'true')
+        response.headers.set('Access-Control-Allow-Origin', 'http://localhost:6969')
+        response.headers.set('Access-Control-Allow-Credentials', 'true')
         return response
 
     except Exception as e:
@@ -218,7 +231,7 @@ def login():
         user.pop('password', None)
 
         # Create response
-        response_data = {
+        login_response_data = {
             'message': 'Login successful',
             'token': token,
             'user': {
@@ -230,9 +243,9 @@ def login():
         }
 
         # Create response with CORS headers
-        response = make_response(jsonify(response_data), 200)
-        response.headers.add('Access-Control-Allow-Origin', request.headers.get('Origin', '*'))
-        response.headers.add('Access-Control-Allow-Credentials', 'true')
+        response = make_response(jsonify(login_response_data), 200)
+        response.headers.set('Access-Control-Allow-Origin', 'http://localhost:6969')
+        response.headers.set('Access-Control-Allow-Credentials', 'true')
         return response
 
     except Exception as e:
@@ -261,8 +274,8 @@ def get_user():
 
         # Create response with CORS headers
         response = make_response(jsonify(user_copy), 200)
-        response.headers.add('Access-Control-Allow-Origin', request.headers.get('Origin', '*'))
-        response.headers.add('Access-Control-Allow-Credentials', 'true')
+        response.headers.set('Access-Control-Allow-Origin', 'http://localhost:6969')
+        response.headers.set('Access-Control-Allow-Credentials', 'true')
         return response
 
     except Exception as e:
@@ -309,8 +322,8 @@ def change_password():
 
         # Create response with CORS headers
         response = make_response(jsonify({'message': 'Password updated successfully'}), 200)
-        response.headers.add('Access-Control-Allow-Origin', request.headers.get('Origin', '*'))
-        response.headers.add('Access-Control-Allow-Credentials', 'true')
+        response.headers.set('Access-Control-Allow-Origin', 'http://localhost:6969')
+        response.headers.set('Access-Control-Allow-Credentials', 'true')
         return response
 
     except Exception as e:
@@ -348,21 +361,10 @@ def request_account_deletion():
                         'message': 'Account deletion request processed. You will receive an email with further instructions.'}),
             200
         )
-        response.headers.add('Access-Control-Allow-Origin', request.headers.get('Origin', '*'))
-        response.headers.add('Access-Control-Allow-Credentials', 'true')
+        response.headers.set('Access-Control-Allow-Origin', 'http://localhost:6969')
+        response.headers.set('Access-Control-Allow-Credentials', 'true')
         return response
 
     except Exception as e:
         logger.error(f"Error in request_account_deletion route: {str(e)}")
         return jsonify({'message': f'Server error: {str(e)}'}), 500
-
-
-def handle_preflight():
-    """Handle OPTIONS preflight requests with proper CORS headers"""
-    logger.debug("Handling preflight request")
-    response = make_response()
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-    response.headers.add('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS')
-    response.headers.add('Access-Control-Allow-Credentials', 'true')
-    return response

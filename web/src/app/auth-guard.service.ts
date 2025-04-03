@@ -2,26 +2,19 @@ import { Injectable } from '@angular/core';
 import { Router, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 import { AuthService } from './auth.service';
 
-const environment = {
-  production: false,
-  apiUrl: 'http://localhost:5000'
-};
-
 @Injectable({
   providedIn: 'root'
 })
 export class AuthGuard {
-  constructor(private router: Router) {}
+  constructor(
+    private router: Router,
+    private authService: AuthService
+  ) {}
 
   canActivate(
     route: ActivatedRouteSnapshot,
     state: RouterStateSnapshot
   ): boolean {
-    // For simplicity, we're going to temporarily allow access without authentication checks
-    return true;
-
-    // When you have the auth service properly set up, you can uncomment this code:
-    /*
     if (this.authService.isAuthenticated()) {
       // Check if the route requires admin role
       const requiresAdmin = route.data['requiresAdmin'] === true;
@@ -41,6 +34,5 @@ export class AuthGuard {
     // Navigate to login page
     this.router.navigate(['/login']);
     return false;
-    */
   }
 }
