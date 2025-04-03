@@ -187,3 +187,2210 @@ body
     .search-button
       border-radius: 4px
       width: 100%
+
+// Build on the existing variables
+$primary-color: #FF5A5F
+$secondary-color: #00A699
+$background-color: #F8F9FA
+$text-color: #484848
+$white: #FFFFFF
+$gray: #767676
+$light-gray: #E4E4E4
+$border-radius: 8px
+$box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08)
+$transition: all 0.3s ease
+
+// Additional colors
+$success-color: #34C759
+$warning-color: #FF9500
+$danger-color: #FF3B30
+$info-color: #5AC8FA
+$highlight-color: #FFF8E6
+
+// Form element styles
+@mixin form-control
+  width: 100%
+  padding: 12px 16px
+  font-size: 1rem
+  border: 1px solid $light-gray
+  border-radius: $border-radius
+  transition: $transition
+  background-color: $white
+  color: $text-color
+
+  &:focus
+    outline: none
+    border-color: $primary-color
+    box-shadow: 0 0 0 3px rgba($primary-color, 0.1)
+
+  &.invalid
+    border-color: $danger-color
+    background-color: rgba($danger-color, 0.03)
+
+// Button styles
+@mixin primary-button
+  padding: 12px 24px
+  font-size: 1rem
+  font-weight: 600
+  background-color: $primary-color
+  color: $white
+  border: none
+  border-radius: $border-radius
+  cursor: pointer
+  transition: $transition
+  display: inline-flex
+  align-items: center
+  justify-content: center
+  gap: 8px
+
+  &:hover
+    background-color: darken($primary-color, 10%)
+    transform: translateY(-2px)
+
+  &:disabled
+    opacity: 0.6
+    cursor: not-allowed
+    transform: none
+
+@mixin secondary-button
+  padding: 12px 24px
+  font-size: 1rem
+  font-weight: 600
+  background-color: $white
+  color: $primary-color
+  border: 1px solid $primary-color
+  border-radius: $border-radius
+  cursor: pointer
+  transition: $transition
+  display: inline-flex
+  align-items: center
+  justify-content: center
+  gap: 8px
+
+  &:hover
+    background-color: rgba($primary-color, 0.05)
+    transform: translateY(-2px)
+
+  &:disabled
+    opacity: 0.6
+    cursor: not-allowed
+    transform: none
+
+@mixin danger-button
+  padding: 12px 24px
+  font-size: 1rem
+  font-weight: 600
+  background-color: $danger-color
+  color: $white
+  border: none
+  border-radius: $border-radius
+  cursor: pointer
+  transition: $transition
+  display: inline-flex
+  align-items: center
+  justify-content: center
+  gap: 8px
+
+  &:hover
+    background-color: darken($danger-color, 10%)
+    transform: translateY(-2px)
+
+  &:disabled
+    opacity: 0.6
+    cursor: not-allowed
+    transform: none
+
+// Card styles
+@mixin card
+  background-color: $white
+  border-radius: $border-radius
+  box-shadow: $box-shadow
+  overflow: hidden
+  transition: $transition
+
+  &:hover
+    transform: translateY(-4px)
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1)
+
+// ====================================
+// Authentication Styles
+// ====================================
+.auth-container
+  display: flex
+  justify-content: center
+  align-items: center
+  min-height: 100vh
+  padding: 40px 20px
+  background-color: $background-color
+
+.auth-card
+  width: 100%
+  max-width: 480px
+  padding: 40px
+  border-radius: $border-radius
+  background-color: $white
+  box-shadow: $box-shadow
+
+.auth-title
+  font-size: 1.8rem
+  margin-bottom: 30px
+  color: $text-color
+  text-align: center
+
+.auth-form
+  display: flex
+  flex-direction: column
+  gap: 20px
+
+  .form-group
+    display: flex
+    flex-direction: column
+    gap: 8px
+
+    label
+      font-size: 0.95rem
+      font-weight: 500
+      color: $text-color
+
+    .form-control
+      @include form-control
+
+    .error-message
+      color: $danger-color
+      font-size: 0.85rem
+      margin-top: 4px
+
+  .form-actions
+    margin-top: 10px
+
+    .auth-button
+      @include primary-button
+      width: 100%
+      padding: 14px
+
+  .auth-error
+    padding: 12px
+    border-radius: $border-radius
+    background-color: rgba($danger-color, 0.1)
+    color: $danger-color
+    font-size: 0.9rem
+    text-align: center
+    margin-top: 20px
+
+  .auth-links
+    text-align: center
+    margin-top: 20px
+    font-size: 0.95rem
+
+    a
+      color: $secondary-color
+      text-decoration: none
+      transition: $transition
+
+      &:hover
+        color: darken($secondary-color, 10%)
+        text-decoration: underline
+
+// ====================================
+// Destinations Styles
+// ====================================
+.destinations-container
+  padding: 40px 0
+
+  .destinations-header
+    text-align: center
+    margin-bottom: 48px
+
+    h1
+      font-size: 2.5rem
+      margin-bottom: 12px
+      color: $text-color
+      font-weight: 700
+
+    p
+      font-size: 1.2rem
+      color: $gray
+
+.categories-slider
+  display: flex
+  gap: 20px
+  overflow-x: auto
+  padding: 10px 0 30px
+  margin-bottom: 40px
+
+  &::-webkit-scrollbar
+    height: 6px
+
+  &::-webkit-scrollbar-track
+    background: $light-gray
+    border-radius: 10px
+
+  &::-webkit-scrollbar-thumb
+    background: $gray
+    border-radius: 10px
+
+    &:hover
+      background: darken($gray, 10%)
+
+  .category-card
+    flex: 0 0 220px
+    padding: 24px
+    background-color: $white
+    border-radius: $border-radius
+    box-shadow: $box-shadow
+    text-align: center
+    cursor: pointer
+    transition: $transition
+
+    &:hover
+      transform: translateY(-8px)
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1)
+
+    .category-icon
+      font-size: 2rem
+      margin-bottom: 16px
+      color: $primary-color
+
+    h3
+      font-size: 1.2rem
+      margin-bottom: 10px
+      color: $text-color
+
+    p
+      font-size: 0.9rem
+      color: $gray
+
+.featured-destinations, .trending-cities, .seasonal-picks
+  margin-bottom: 60px
+
+  h2
+    font-size: 2rem
+    margin-bottom: 24px
+    color: $text-color
+    font-weight: 600
+
+  p
+    font-size: 1.1rem
+    color: $gray
+    margin-bottom: 30px
+
+.destinations-grid
+  display: grid
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr))
+  gap: 30px
+
+  .destination-card
+    @include card
+    display: flex
+    flex-direction: column
+
+    .destination-image-container
+      position: relative
+
+      .destination-image
+        width: 100%
+        height: 240px
+        object-fit: cover
+        border-radius: $border-radius $border-radius 0 0
+
+      .destination-rating
+        position: absolute
+        top: 16px
+        right: 16px
+        background-color: $primary-color
+        color: $white
+        padding: 4px 10px
+        border-radius: 20px
+        font-size: 0.9rem
+        font-weight: 600
+        display: flex
+        align-items: center
+        gap: 4px
+
+        .rating-icon
+          font-size: 1rem
+
+    .destination-details
+      padding: 24px
+      flex-grow: 1
+      display: flex
+      flex-direction: column
+
+      h3
+        font-size: 1.5rem
+        margin-bottom: 8px
+        color: $text-color
+
+      .destination-location
+        font-size: 1rem
+        color: $gray
+        margin-bottom: 8px
+
+      .destination-price
+        font-size: 1.1rem
+        font-weight: 600
+        color: $secondary-color
+        margin-bottom: 16px
+
+      .destination-description
+        font-size: 0.95rem
+        line-height: 1.6
+        color: $text-color
+        margin-bottom: 16px
+
+      .popular-tags
+        display: flex
+        flex-wrap: wrap
+        gap: 8px
+        margin-bottom: 16px
+
+        .tag
+          font-size: 0.8rem
+          padding: 4px 12px
+          background-color: rgba($light-gray, 0.7)
+          border-radius: 20px
+          color: $text-color
+
+      .explore-button
+        @include secondary-button
+        margin-top: auto
+
+.cities-grid
+  display: grid
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr))
+  gap: 24px
+
+  .city-card
+    position: relative
+    border-radius: $border-radius
+    overflow: hidden
+    aspect-ratio: 1 / 1
+    cursor: pointer
+
+    &::after
+      content: ""
+      position: absolute
+      top: 0
+      left: 0
+      width: 100%
+      height: 100%
+      background: linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.6))
+      z-index: 1
+      transition: $transition
+
+    &:hover::after
+      background: linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.7))
+
+    &:hover .city-image
+      transform: scale(1.05)
+
+    .city-image
+      width: 100%
+      height: 100%
+      object-fit: cover
+      transition: transform 0.5s ease
+
+    .city-overlay
+      position: absolute
+      bottom: 0
+      left: 0
+      width: 100%
+      padding: 20px
+      z-index: 2
+
+      h3
+        font-size: 1.5rem
+        color: $white
+        margin-bottom: 8px
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3)
+
+      p
+        font-size: 1rem
+        color: rgba($white, 0.9)
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3)
+
+.seasonal-grid
+  display: grid
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr))
+  gap: 24px
+
+  .seasonal-card
+    @include card
+    cursor: pointer
+
+    .seasonal-image
+      width: 100%
+      height: 200px
+      object-fit: cover
+
+    .seasonal-details
+      padding: 16px
+
+      h3
+        font-size: 1.2rem
+        margin-bottom: 8px
+        color: $text-color
+
+      p
+        font-size: 0.9rem
+        color: $gray
+        margin-bottom: 12px
+
+      .seasonal-tags
+        display: flex
+        gap: 8px
+
+        .tag
+          font-size: 0.8rem
+          padding: 4px 12px
+          border-radius: 20px
+
+          &.highlight
+            background-color: $highlight-color
+            color: darken($highlight-color, 60%)
+
+.inspiration-grid
+  display: grid
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr))
+  gap: 24px
+
+  .inspiration-card
+    background-color: $white
+    border-radius: $border-radius
+    padding: 30px 24px
+    text-align: center
+    box-shadow: $box-shadow
+    transition: $transition
+
+    &:hover
+      transform: translateY(-8px)
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1)
+
+    h3
+      font-size: 1.3rem
+      margin-bottom: 12px
+      color: $text-color
+
+    p
+      font-size: 0.95rem
+      color: $gray
+      margin-bottom: 20px
+
+    .inspiration-button
+      @include secondary-button
+      padding: 10px 20px
+
+// ====================================
+// Trip Planner Styles
+// ====================================
+.planner-container
+  padding: 40px 0
+
+  .planner-header
+    text-align: center
+    margin-bottom: 48px
+
+    h1
+      font-size: 2.5rem
+      margin-bottom: 12px
+      color: $text-color
+      font-weight: 700
+
+    p
+      font-size: 1.2rem
+      color: $gray
+
+.planner-actions
+  display: flex
+  justify-content: center
+  margin-bottom: 40px
+
+  .create-button
+    @include primary-button
+    gap: 10px
+
+    svg
+      fill: currentColor
+      width: 20px
+      height: 20px
+
+.new-itinerary-form,
+.activities-form,
+.accommodation-form,
+.transportation-form
+  background-color: $white
+  border-radius: $border-radius
+  padding: 30px
+  box-shadow: $box-shadow
+  margin-bottom: 40px
+
+  h2, h4
+    font-size: 1.5rem
+    margin-bottom: 24px
+    color: $text-color
+    font-weight: 600
+
+  .form-row
+    display: flex
+    gap: 20px
+    margin-bottom: 20px
+
+    @media (max-width: 768px)
+      flex-direction: column
+
+    .form-group
+      flex: 1
+
+  .form-group
+    margin-bottom: 20px
+
+    &.full-width
+      width: 100%
+
+    label
+      display: block
+      margin-bottom: 8px
+      font-size: 0.95rem
+      font-weight: 500
+      color: $text-color
+
+      &.checkbox-label
+        display: flex
+        align-items: center
+        gap: 8px
+        cursor: pointer
+
+        input[type="checkbox"]
+          width: 18px
+          height: 18px
+          accent-color: $primary-color
+
+    .form-control
+      @include form-control
+
+      &.textarea
+        min-height: 120px
+        resize: vertical
+
+    .error-message
+      color: $danger-color
+      font-size: 0.85rem
+      margin-top: 6px
+
+  .form-actions
+    display: flex
+    justify-content: flex-end
+    gap: 12px
+    margin-top: 30px
+
+    .cancel-button
+      @include secondary-button
+
+    .save-button
+      @include primary-button
+
+.itinerary-list
+  display: grid
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr))
+  gap: 24px
+  margin-bottom: 40px
+
+  .itinerary-card
+    @include card
+    padding: 24px
+
+    .itinerary-header
+      display: flex
+      justify-content: space-between
+      margin-bottom: 16px
+
+      h3
+        font-size: 1.3rem
+        color: $text-color
+        font-weight: 600
+
+      .itinerary-dates
+        display: flex
+        align-items: center
+        gap: 6px
+        font-size: 0.9rem
+        color: $gray
+
+        svg
+          fill: $gray
+
+    .itinerary-destination,
+    .itinerary-budget
+      display: flex
+      align-items: center
+      gap: 8px
+      margin-bottom: 12px
+      font-size: 1rem
+      color: $text-color
+
+      svg
+        fill: $secondary-color
+
+    .itinerary-stats
+      display: flex
+      justify-content: space-between
+      border-top: 1px solid $light-gray
+      border-bottom: 1px solid $light-gray
+      padding: 16px 0
+      margin: 16px 0
+
+      .stat-item
+        text-align: center
+
+        .stat-value
+          font-size: 1.5rem
+          font-weight: 600
+          color: $primary-color
+          margin-bottom: 4px
+
+        .stat-label
+          font-size: 0.85rem
+          color: $gray
+
+    .itinerary-actions
+      display: flex
+      gap: 10px
+
+      button
+        flex: 1
+        padding: 10px
+        border: none
+        border-radius: $border-radius
+        font-size: 0.9rem
+        font-weight: 500
+        cursor: pointer
+        transition: $transition
+
+        &.view-button
+          background-color: $secondary-color
+          color: $white
+
+          &:hover
+            background-color: darken($secondary-color, 10%)
+
+        &.edit-button
+          background-color: $info-color
+          color: $white
+
+          &:hover
+            background-color: darken($info-color, 10%)
+
+        &.delete-button
+          background-color: $danger-color
+          color: $white
+
+          &:hover
+            background-color: darken($danger-color, 10%)
+
+.empty-state
+  text-align: center
+  padding: 60px 0
+
+  .empty-illustration
+    margin-bottom: 24px
+
+    svg
+      fill: $light-gray
+      width: 80px
+      height: 80px
+
+  h2
+    font-size: 1.8rem
+    margin-bottom: 12px
+    color: $text-color
+
+  p
+    font-size: 1.1rem
+    color: $gray
+    margin-bottom: 24px
+    max-width: 500px
+    margin-left: auto
+    margin-right: auto
+
+  .create-button
+    @include primary-button
+    gap: 10px
+
+    svg
+      fill: currentColor
+
+.itinerary-detail
+  .detail-header
+    display: flex
+    justify-content: space-between
+    align-items: flex-start
+    margin-bottom: 30px
+
+    .header-content
+      h2
+        font-size: 2rem
+        margin-bottom: 8px
+        color: $text-color
+        font-weight: 600
+
+      .detail-dates,
+      .detail-location
+        font-size: 1.1rem
+        color: $gray
+        margin-bottom: 4px
+
+    .close-button
+      background: none
+      border: none
+      cursor: pointer
+      padding: 8px
+
+      svg
+        fill: $gray
+        transition: $transition
+
+        &:hover
+          fill: $primary-color
+
+.overview-content
+  padding: 20px 0
+
+  .budget-tracker
+    background-color: $white
+    border-radius: $border-radius
+    padding: 24px
+    box-shadow: $box-shadow
+    margin-bottom: 30px
+
+    h3
+      font-size: 1.3rem
+      margin-bottom: 20px
+      color: $text-color
+      font-weight: 600
+
+    .budget-progress
+      .budget-bar
+        height: 16px
+        background-color: $light-gray
+        border-radius: 8px
+        overflow: hidden
+        margin-bottom: 16px
+
+        .budget-spent
+          height: 100%
+          background-color: $secondary-color
+          border-radius: 8px
+
+      .budget-stats
+        display: grid
+        grid-template-columns: repeat(3, 1fr)
+
+        & > div
+          display: flex
+          flex-direction: column
+          align-items: center
+
+          span:first-child
+            font-size: 0.9rem
+            color: $gray
+            margin-bottom: 4px
+
+          span:last-child
+            font-size: 1.2rem
+            font-weight: 600
+            color: $text-color
+
+        .budget-remaining
+          &.over-budget
+            span:last-child
+              color: $danger-color
+
+.trip-summary
+  margin-bottom: 30px
+
+  h3
+    font-size: 1.3rem
+    margin-bottom: 20px
+    color: $text-color
+    font-weight: 600
+
+  .summary-grid
+    display: grid
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr))
+    gap: 20px
+
+    .summary-card
+      background-color: $white
+      border-radius: $border-radius
+      padding: 20px
+      box-shadow: $box-shadow
+      text-align: center
+
+      h4
+        font-size: 1rem
+        color: $gray
+        margin-bottom: 8px
+
+      p
+        font-size: 1.8rem
+        font-weight: 600
+        color: $secondary-color
+
+.notes-section
+  background-color: $white
+  border-radius: $border-radius
+  padding: 24px
+  box-shadow: $box-shadow
+  margin-bottom: 30px
+
+  h3
+    font-size: 1.3rem
+    margin-bottom: 16px
+    color: $text-color
+    font-weight: 600
+
+  .notes-content
+    font-size: 1rem
+    line-height: 1.6
+    color: $text-color
+
+.trip-timeline
+  h3
+    font-size: 1.3rem
+    margin-bottom: 20px
+    color: $text-color
+    font-weight: 600
+
+  .timeline
+    position: relative
+
+    &::before
+      content: ""
+      position: absolute
+      top: 0
+      bottom: 0
+      left: 42px
+      width: 2px
+      background-color: $light-gray
+      z-index: 0
+
+    .timeline-item
+      display: flex
+      margin-bottom: 30px
+      position: relative
+
+      .timeline-date
+        display: flex
+        align-items: flex-start
+        gap: 16px
+        min-width: 150px
+        position: relative
+        z-index: 1
+
+        .date-marker
+          width: 36px
+          height: 36px
+          background-color: $primary-color
+          color: $white
+          border-radius: 50%
+          display: flex
+          align-items: center
+          justify-content: center
+          font-weight: 600
+          font-size: 1rem
+
+        .date-details
+          .date-day
+            font-weight: 600
+            font-size: 1rem
+            color: $text-color
+
+          .date-full
+            font-size: 0.9rem
+            color: $gray
+
+      .timeline-events
+        flex: 1
+
+        .timeline-event
+          background-color: $white
+          border-radius: $border-radius
+          padding: 16px
+          box-shadow: $box-shadow
+          margin-bottom: 12px
+          display: flex
+          align-items: center
+
+          &.transport
+            border-left: 4px solid $info-color
+
+          &.accommodation
+            border-left: 4px solid $secondary-color
+
+          &.activity
+            border-left: 4px solid $primary-color
+
+          .event-time
+            font-size: 0.9rem
+            font-weight: 600
+            color: $gray
+            width: 80px
+
+          .event-type
+            font-size: 0.9rem
+            font-weight: 500
+            color: $white
+            background-color: $secondary-color
+            padding: 4px 8px
+            border-radius: 4px
+            width: 80px
+            text-align: center
+            margin-right: 16px
+
+          .event-details
+            flex: 1
+            font-size: 1rem
+            color: $text-color
+
+            .event-sub
+              font-size: 0.9rem
+              color: $gray
+              margin-top: 4px
+
+        .empty-day
+          background-color: rgba($light-gray, 0.3)
+          border-radius: $border-radius
+          padding: 16px
+          text-align: center
+          color: $gray
+
+          .add-activity-button
+            background: none
+            border: none
+            color: $primary-color
+            font-size: 0.9rem
+            cursor: pointer
+            margin-top: 8px
+
+            &:hover
+              text-decoration: underline
+
+.activities-content,
+.accommodations-content,
+.transportation-content
+  padding: 20px 0
+
+  .section-header
+    display: flex
+    justify-content: space-between
+    align-items: center
+    margin-bottom: 24px
+
+    h3
+      font-size: 1.3rem
+      color: $text-color
+      font-weight: 600
+
+    .add-button
+      @include secondary-button
+      padding: 8px 16px
+      font-size: 0.9rem
+      gap: 6px
+
+      svg
+        fill: currentColor
+
+.activities-list,
+.accommodations-list,
+.transportation-list
+  display: grid
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr))
+  gap: 20px
+
+  .activity-card,
+  .accommodation-card,
+  .transportation-card
+    background-color: $white
+    border-radius: $border-radius
+    box-shadow: $box-shadow
+    overflow: hidden
+    display: flex
+
+    .activity-info,
+    .accommodation-info,
+    .transportation-info
+      flex: 1
+      padding: 20px
+
+      h4
+        font-size: 1.1rem
+        margin-bottom: 8px
+        color: $text-color
+        font-weight: 600
+
+      .activity-datetime,
+      .activity-location,
+      .accommodation-location,
+      .accommodation-dates,
+      .transport-carrier,
+      .transport-datetime
+        font-size: 0.9rem
+        color: $gray
+        margin-bottom: 4px
+        display: flex
+        align-items: center
+        gap: 6px
+
+      .activity-cost,
+      .accommodation-cost,
+      .transport-cost
+        font-size: 1rem
+        font-weight: 600
+        color: $secondary-color
+        margin: 8px 0
+
+      .booking-status,
+      .confirmation-number
+        font-size: 0.8rem
+        background-color: $success-color
+        color: $white
+        padding: 4px 8px
+        border-radius: 4px
+        display: inline-block
+
+    .activity-actions,
+    .accommodation-actions,
+    .transportation-actions
+      display: flex
+      flex-direction: column
+      justify-content: center
+      gap: 8px
+      padding: 10px
+      border-left: 1px solid $light-gray
+
+      button
+        background: none
+        border: none
+        padding: 8px
+        cursor: pointer
+        font-size: 0.9rem
+        border-radius: 4px
+        transition: $transition
+
+        &.edit-button
+          color: $info-color
+
+          &:hover
+            background-color: rgba($info-color, 0.1)
+
+        &.delete-button
+          color: $danger-color
+
+          &:hover
+            background-color: rgba($danger-color, 0.1)
+
+    .transportation-type
+      width: 60px
+      display: flex
+      align-items: center
+      justify-content: center
+      background-color: $info-color
+
+      &.flight
+        background-color: $primary-color
+
+      &.train
+        background-color: $secondary-color
+
+      &.car
+        background-color: $warning-color
+
+      &.bus
+        background-color: $info-color
+
+      &.other
+        background-color: $gray
+
+      svg
+        fill: $white
+        width: 30px
+        height: 30px
+
+// ====================================
+// Profile Styles
+// ====================================
+.profile-container
+  padding: 40px 0
+
+  .profile-header
+    display: flex
+    justify-content: space-between
+    align-items: flex-start
+    margin-bottom: 40px
+
+    .user-info
+      display: flex
+      gap: 24px
+
+      .profile-picture
+        width: 120px
+        height: 120px
+        border-radius: 50%
+        object-fit: cover
+        border: 3px solid $white
+        box-shadow: $box-shadow
+
+      .user-details
+        h1
+          font-size: 2rem
+          margin-bottom: 8px
+          color: $text-color
+          font-weight: 600
+
+        p
+          font-size: 1rem
+          color: $gray
+          margin-bottom: 16px
+
+        .user-stats
+          display: flex
+          gap: 24px
+
+          .stat
+            text-align: center
+
+            .stat-value
+              font-size: 1.5rem
+              font-weight: 600
+              color: $primary-color
+              display: block
+              margin-bottom: 4px
+
+            .stat-label
+              font-size: 0.9rem
+              color: $gray
+
+    .edit-profile-button
+      @include secondary-button
+      padding: 10px 20px
+
+.edit-profile-form
+  background-color: $white
+  border-radius: $border-radius
+  padding: 30px
+  box-shadow: $box-shadow
+  margin-bottom: 30px
+
+  h2
+    font-size: 1.5rem
+    margin-bottom: 24px
+    color: $text-color
+    font-weight: 600
+
+.tabs-content
+  padding: 20px 0
+
+.filter-buttons
+  display: flex
+  gap: 12px
+  margin-bottom: 24px
+  flex-wrap: wrap
+
+  .filter-button
+    background-color: $white
+    border: 1px solid $light-gray
+    color: $text-color
+    padding: 8px 16px
+    border-radius: $border-radius
+    font-size: 0.95rem
+    cursor: pointer
+    transition: $transition
+
+    &:hover
+      background-color: rgba($light-gray, 0.5)
+
+    &.active
+      background-color: $primary-color
+      color: $white
+      border-color: $primary-color
+
+.trips-list
+  display: grid
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr))
+  gap: 24px
+
+  .trip-card
+    @include card
+    display: flex
+    flex-direction: column
+
+    .trip-image
+      width: 100%
+      height: 180px
+      object-fit: cover
+
+    .trip-details
+      padding: 20px
+      flex-grow: 1
+
+      h3
+        font-size: 1.2rem
+        margin-bottom: 8px
+        color: $text-color
+        font-weight: 600
+
+      .trip-location,
+      .trip-dates,
+      .trip-guests
+        font-size: 0.9rem
+        color: $gray
+        margin-bottom: 4px
+
+      .trip-price
+        font-size: 1.1rem
+        font-weight: 600
+        color: $secondary-color
+        margin: 8px 0
+
+      .trip-status
+        display: inline-block
+        padding: 4px 10px
+        border-radius: 20px
+        font-size: 0.8rem
+        font-weight: 500
+        margin-bottom: 16px
+
+        &.upcoming
+          background-color: $info-color
+          color: $white
+
+        &.completed
+          background-color: $success-color
+          color: $white
+
+        &.cancelled
+          background-color: $danger-color
+          color: $white
+
+      .trip-actions
+        display: flex
+        gap: 10px
+
+        .trip-button
+          flex: 1
+          padding: 10px
+          border: none
+          border-radius: $border-radius
+          font-size: 0.9rem
+          font-weight: 500
+          cursor: pointer
+          transition: $transition
+
+          &.view
+            background-color: $secondary-color
+            color: $white
+
+            &:hover
+              background-color: darken($secondary-color, 10%)
+
+          &.cancel
+            background-color: $danger-color
+            color: $white
+
+            &:hover
+              background-color: darken($danger-color, 10%)
+
+.saved-listings
+  display: grid
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr))
+  gap: 24px
+
+  .listing-card
+    @include card
+    position: relative
+
+    .card-actions
+      position: absolute
+      top: 12px
+      right: 12px
+      z-index: 10
+
+      .remove-saved
+        background: none
+        border: none
+        cursor: pointer
+
+        svg
+          fill: $primary-color
+          filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3))
+          transition: $transition
+
+          &:hover
+            transform: scale(1.1)
+
+    .listing-image
+      width: 100%
+      height: 200px
+      object-fit: cover
+
+    .listing-details
+      padding: 20px
+
+      h3
+        font-size: 1.2rem
+        margin-bottom: 8px
+        color: $text-color
+        font-weight: 600
+
+      .listing-location
+        font-size: 0.9rem
+        color: $gray
+        margin-bottom: 4px
+
+      .listing-price
+        font-size: 1.1rem
+        font-weight: 600
+        color: $secondary-color
+        margin: 8px 0 12px
+
+      .view-listing
+        color: $primary-color
+        text-decoration: none
+        font-weight: 500
+        transition: $transition
+
+        &:hover
+          text-decoration: underline
+
+.my-listings-header
+  display: flex
+  justify-content: space-between
+  align-items: center
+  margin-bottom: 24px
+
+  h2
+    font-size: 1.5rem
+    color: $text-color
+    font-weight: 600
+
+  .action-button
+    @include primary-button
+    padding: 10px 20px
+
+.bookings-list
+  display: grid
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr))
+  gap: 24px
+
+  .booking-card
+    @include card
+    display: flex
+
+    .booking-image
+      width: 120px
+      object-fit: cover
+
+    .booking-details
+      flex: 1
+      padding: 16px
+
+      h3
+        font-size: 1.1rem
+        margin-bottom: 8px
+        color: $text-color
+        font-weight: 600
+
+      .booking-dates,
+      .booking-guest,
+      .booking-contact
+        font-size: 0.9rem
+        color: $gray
+        margin-bottom: 4px
+
+      .booking-status
+        display: inline-block
+        padding: 4px 10px
+        border-radius: 20px
+        font-size: 0.8rem
+        font-weight: 500
+        margin: 8px 0
+
+        &.confirmed
+          background-color: $success-color
+          color: $white
+
+        &.pending
+          background-color: $warning-color
+          color: $white
+
+      .booking-actions
+        display: flex
+        gap: 10px
+        margin-top: 8px
+
+        .booking-button
+          flex: 1
+          padding: 8px
+          border: none
+          border-radius: $border-radius
+          font-size: 0.85rem
+          font-weight: 500
+          cursor: pointer
+          transition: $transition
+
+          &.approve
+            background-color: $success-color
+            color: $white
+
+            &:hover
+              background-color: darken($success-color, 10%)
+
+          &.reject
+            background-color: $danger-color
+            color: $white
+
+            &:hover
+              background-color: darken($danger-color, 10%)
+
+.no-results
+  text-align: center
+  padding: 40px 0
+
+  p
+    font-size: 1.1rem
+    color: $gray
+    margin-bottom: 16px
+
+  .action-button
+    @include primary-button
+    padding: 10px 20px
+
+.settings-section
+  background-color: $white
+  border-radius: $border-radius
+  padding: 30px
+  box-shadow: $box-shadow
+  margin-bottom: 30px
+
+  h2
+    font-size: 1.5rem
+    margin-bottom: 24px
+    color: $text-color
+    font-weight: 600
+
+  &.danger-zone
+    border: 1px solid $danger-color
+
+    h2
+      color: $danger-color
+
+    .danger-button
+      @include danger-button
+
+.payment-methods
+  .payment-card
+    display: flex
+    justify-content: space-between
+    align-items: center
+    background-color: rgba($light-gray, 0.3)
+    border-radius: $border-radius
+    padding: 16px
+    margin-bottom: 16px
+
+    .card-info
+      display: flex
+      flex-direction: column
+      gap: 4px
+
+      .card-type
+        font-size: 0.8rem
+        font-weight: 600
+        color: $white
+        background-color: $gray
+        padding: 4px 8px
+        border-radius: 4px
+        display: inline-block
+
+        &.visa
+          background-color: #1A1F71
+
+        &.mastercard
+          background-color: #EB001B
+
+        &.amex
+          background-color: #006FCF
+
+      .card-number
+        font-size: 1rem
+        color: $text-color
+
+      .card-expiry
+        font-size: 0.9rem
+        color: $gray
+
+    .card-actions
+      display: flex
+      align-items: center
+      gap: 12px
+
+      .card-button
+        background: none
+        border: none
+        font-size: 0.9rem
+        cursor: pointer
+        transition: $transition
+
+        &.default
+          color: $secondary-color
+
+          &:hover
+            text-decoration: underline
+
+        &.remove
+          color: $danger-color
+
+          &:hover
+            text-decoration: underline
+
+      .default-badge
+        font-size: 0.8rem
+        background-color: $success-color
+        color: $white
+        padding: 4px 8px
+        border-radius: 4px
+
+  .add-payment-button
+    @include secondary-button
+    margin-top: 16px
+
+.notification-settings
+  .notification-option
+    display: flex
+    justify-content: space-between
+    align-items: center
+    padding: 16px
+    border-bottom: 1px solid $light-gray
+
+    &:last-child
+      border-bottom: none
+
+    .option-info
+      flex: 1
+
+      h3
+        font-size: 1.1rem
+        margin-bottom: 4px
+        color: $text-color
+        font-weight: 500
+
+      p
+        font-size: 0.9rem
+        color: $gray
+
+    .toggle-switch
+      position: relative
+      display: inline-block
+      width: 50px
+      height: 24px
+
+      input
+        opacity: 0
+        width: 0
+        height: 0
+
+        &:checked + .toggle-slider
+          background-color: $success-color
+
+          &:before
+            transform: translateX(26px)
+
+      .toggle-slider
+        position: absolute
+        cursor: pointer
+        top: 0
+        left: 0
+        right: 0
+        bottom: 0
+        background-color: $light-gray
+        transition: $transition
+        border-radius: 34px
+
+        &:before
+          position: absolute
+          content: ""
+          height: 16px
+          width: 16px
+          left: 4px
+          bottom: 4px
+          background-color: $white
+          transition: $transition
+          border-radius: 50%
+
+.save-preferences-button
+  @include primary-button
+  margin-top: 20px
+
+// ====================================
+// Reviews Styles
+// ====================================
+.reviews-container
+  padding: 40px 0
+
+  .reviews-header
+    display: flex
+    justify-content: space-between
+    align-items: center
+    margin-bottom: 30px
+
+    @media (max-width: 768px)
+      flex-direction: column
+      align-items: flex-start
+      gap: 16px
+
+    h2
+      font-size: 1.8rem
+      color: $text-color
+      font-weight: 600
+      display: flex
+      align-items: center
+      gap: 10px
+
+      .average-rating
+        display: inline-flex
+        align-items: center
+        gap: 4px
+        background-color: $primary-color
+        color: $white
+        padding: 4px 10px
+        border-radius: 20px
+        font-size: 1rem
+        font-weight: 600
+
+        .star-icon
+          font-size: 1.1rem
+
+    .rating-filters
+      display: flex
+      flex-wrap: wrap
+      gap: 8px
+
+      .rating-filter
+        background-color: $white
+        border: 1px solid $light-gray
+        color: $text-color
+        padding: 6px 12px
+        border-radius: 20px
+        font-size: 0.9rem
+        cursor: pointer
+        transition: $transition
+
+        &:hover
+          background-color: rgba($light-gray, 0.5)
+
+        &.active
+          background-color: $primary-color
+          color: $white
+          border-color: $primary-color
+
+        .filter-count
+          color: $gray
+          font-size: 0.8rem
+
+.rating-breakdown
+  display: grid
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr))
+  gap: 24px
+  margin-bottom: 40px
+
+  .rating-category
+    display: flex
+    align-items: center
+    gap: 12px
+
+    .category-name
+      font-size: 0.95rem
+      color: $text-color
+      width: 100px
+
+    .rating-bar-container
+      flex: 1
+      display: flex
+      align-items: center
+      gap: 12px
+
+      .rating-bar
+        flex: 1
+        height: 8px
+        background-color: $light-gray
+        border-radius: 4px
+        overflow: hidden
+
+        .rating-fill
+          height: 100%
+          background-color: $primary-color
+          border-radius: 4px
+
+      .category-score
+        font-size: 0.9rem
+        color: $text-color
+        font-weight: 600
+        width: 30px
+        text-align: right
+
+.reviews-list
+  .review-card
+    background-color: $white
+    border-radius: $border-radius
+    padding: 24px
+    box-shadow: $box-shadow
+    margin-bottom: 24px
+
+    .review-header
+      display: flex
+      margin-bottom: 20px
+
+      .reviewer-image
+        width: 48px
+        height: 48px
+        border-radius: 50%
+        object-fit: cover
+        margin-right: 16px
+
+      .reviewer-info
+        flex: 1
+
+        .reviewer-name
+          font-size: 1.1rem
+          margin-bottom: 4px
+          color: $text-color
+          font-weight: 600
+
+        .review-date
+          font-size: 0.9rem
+          color: $gray
+
+      .review-rating
+        display: flex
+
+        .star-icon
+          color: $light-gray
+
+          svg
+            width: 20px
+            height: 20px
+            fill: $light-gray
+
+            &.filled
+              fill: $primary-color
+
+    .review-content
+      .review-text
+        font-size: 1rem
+        line-height: 1.6
+        color: $text-color
+        margin-bottom: 20px
+
+      .review-photos
+        margin-bottom: 20px
+
+        h4
+          font-size: 1rem
+          margin-bottom: 12px
+          color: $text-color
+          font-weight: 500
+
+        .photos-grid
+          display: grid
+          grid-template-columns: repeat(auto-fill, minmax(100px, 1fr))
+          gap: 12px
+
+          .photo-item
+            width: 100%
+            aspect-ratio: 1 / 1
+            border-radius: 8px
+            overflow: hidden
+
+            .review-photo
+              width: 100%
+              height: 100%
+              object-fit: cover
+
+      .review-categories
+        display: grid
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr))
+        gap: 16px
+        padding: 16px
+        background-color: rgba($light-gray, 0.3)
+        border-radius: $border-radius
+        margin-bottom: 20px
+
+        .category-item
+          .category-label
+            font-size: 0.9rem
+            color: $gray
+            margin-right: 6px
+
+          .category-value
+            font-size: 0.95rem
+            font-weight: 600
+            color: $text-color
+
+      .host-response
+        background-color: rgba($light-gray, 0.3)
+        border-radius: $border-radius
+        padding: 16px
+        margin-bottom: 16px
+
+        h4
+          font-size: 1rem
+          margin-bottom: 8px
+          color: $text-color
+          font-weight: 600
+
+        .response-date
+          font-size: 0.9rem
+          color: $gray
+          margin-bottom: 8px
+
+        .response-text
+          font-size: 1rem
+          line-height: 1.6
+          color: $text-color
+
+      .review-actions
+        display: flex
+        gap: 16px
+
+        button
+          display: flex
+          align-items: center
+          gap: 6px
+          background: none
+          border: none
+          font-size: 0.9rem
+          color: $gray
+          cursor: pointer
+          transition: $transition
+
+          svg
+            fill: currentColor
+
+          &:hover
+            color: $primary-color
+
+.pagination
+  display: flex
+  justify-content: center
+  align-items: center
+  margin-top: 30px
+
+  .page-button
+    display: flex
+    align-items: center
+    gap: 4px
+    padding: 8px 16px
+    background-color: $white
+    border: 1px solid $light-gray
+    color: $text-color
+    font-size: 0.9rem
+    border-radius: $border-radius
+    cursor: pointer
+    transition: $transition
+
+    &:hover:not(:disabled)
+      background-color: $primary-color
+      color: $white
+      border-color: $primary-color
+
+    &:disabled
+      opacity: 0.5
+      cursor: not-allowed
+
+    svg
+      fill: currentColor
+
+  .page-numbers
+    display: flex
+    align-items: center
+    gap: 8px
+    margin: 0 12px
+
+    .page-number
+      width: 36px
+      height: 36px
+      display: flex
+      align-items: center
+      justify-content: center
+      background-color: $white
+      border: 1px solid $light-gray
+      color: $text-color
+      font-size: 0.9rem
+      border-radius: $border-radius
+      cursor: pointer
+      transition: $transition
+
+      &:hover:not(.active)
+        background-color: rgba($light-gray, 0.5)
+
+      &.active
+        background-color: $primary-color
+        color: $white
+        border-color: $primary-color
+
+.no-reviews
+  text-align: center
+  padding: 40px 0
+  background-color: rgba($light-gray, 0.3)
+  border-radius: $border-radius
+
+  p
+    font-size: 1.1rem
+    color: $gray
+    margin-bottom: 16px
+
+  .reset-filter
+    @include secondary-button
+    padding: 8px 16px
+    font-size: 0.9rem
+
+.write-review
+  background-color: $white
+  border-radius: $border-radius
+  padding: 30px
+  box-shadow: $box-shadow
+  margin-top: 40px
+
+  h3
+    font-size: 1.5rem
+    margin-bottom: 24px
+    color: $text-color
+    font-weight: 600
+
+  .rating-input
+    margin-bottom: 24px
+
+    label
+      display: block
+      margin-bottom: 12px
+      font-size: 1rem
+      font-weight: 500
+      color: $text-color
+
+    .star-rating
+      display: flex
+      align-items: center
+      gap: 16px
+
+      .star-button
+        background: none
+        border: none
+        padding: 0
+        cursor: pointer
+
+        svg
+          width: 32px
+          height: 32px
+          fill: $light-gray
+          transition: $transition
+
+        &.filled svg
+          fill: $primary-color
+
+        &:hover svg
+          transform: scale(1.1)
+
+      .rating-text
+        font-size: 1rem
+        color: $text-color
+
+  .category-ratings
+    margin-bottom: 24px
+
+    h4
+      font-size: 1.1rem
+      margin-bottom: 16px
+      color: $text-color
+      font-weight: 500
+
+    .category-grid
+      display: grid
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr))
+      gap: 20px
+
+      .category-rating
+        label
+          display: block
+          margin-bottom: 8px
+          font-size: 0.95rem
+          color: $text-color
+
+        .mini-star-rating
+          display: flex
+          gap: 4px
+
+          .mini-star
+            background: none
+            border: none
+            padding: 0
+            cursor: pointer
+
+            svg
+              width: 20px
+              height: 20px
+              fill: $light-gray
+              transition: $transition
+
+            &.filled svg
+              fill: $primary-color
+
+            &:hover svg
+              transform: scale(1.1)
+
+  .form-group
+    margin-bottom: 24px
+
+    label
+      display: block
+      margin-bottom: 8px
+      font-size: 1rem
+      font-weight: 500
+      color: $text-color
+
+    textarea
+      @include form-control
+      min-height: 150px
+      resize: vertical
+
+    .error-message
+      color: $danger-color
+      font-size: 0.85rem
+      margin-top: 6px
+
+    .photo-upload
+      position: relative
+
+      .upload-button
+        @include secondary-button
+        padding: 12px 20px
+        display: flex
+        align-items: center
+        gap: 8px
+
+        svg
+          fill: currentColor
+
+      .file-input
+        position: absolute
+        top: 0
+        left: 0
+        width: 100%
+        height: 100%
+        opacity: 0
+        cursor: pointer
+
+      .upload-hint
+        font-size: 0.85rem
+        color: $gray
+        margin-top: 8px
+
+  .photo-preview
+    display: grid
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr))
+    gap: 12px
+    margin-bottom: 24px
+
+    .preview-item
+      position: relative
+      width: 100%
+      aspect-ratio: 1 / 1
+      border-radius: 8px
+      overflow: hidden
+
+      .preview-image
+        width: 100%
+        height: 100%
+        object-fit: cover
+
+      .remove-file
+        position: absolute
+        top: 4px
+        right: 4px
+        width: 24px
+        height: 24px
+        border-radius: 50%
+        background-color: rgba(0, 0, 0, 0.6)
+        color: $white
+        border: none
+        display: flex
+        align-items: center
+        justify-content: center
+        cursor: pointer
+        transition: $transition
+
+        &:hover
+          background-color: $danger-color
+
+        svg
+          fill: currentColor
+          width: 16px
+          height: 16px
+
+  .form-actions
+    display: flex
+    justify-content: flex-end
+    gap: 12px
+
+    .cancel-button
+      @include secondary-button
+      padding: 10px 20px
+
+    .submit-button
+      @include primary-button
+      padding: 10px 20px
+
+// Responsive styles for all components
+@media (max-width: 992px)
+  .destinations-grid,
+  .activities-list,
+  .accommodations-list,
+  .transportation-list,
+  .trips-list,
+  .bookings-list
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr))
+
+  .rating-breakdown
+    grid-template-columns: 1fr
+
+@media (max-width: 768px)
+  .profile-header
+    flex-direction: column
+    gap: 20px
+
+    .edit-profile-button
+      align-self: flex-start
+
+  .user-info
+    flex-direction: column
+
+    .user-stats
+      justify-content: flex-start
+
+  .review-header
+    flex-direction: column
+    gap: 16px
+
+    .reviewer-image
+      margin-right: 0
+
+    .review-rating
+      margin-top: 10px
+
+@media (max-width: 576px)
+  .review-categories
+    grid-template-columns: 1fr
+
+  .category-grid
+    grid-template-columns: 1fr
+
+  .form-row
+    flex-direction: column

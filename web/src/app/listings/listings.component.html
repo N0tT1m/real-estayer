@@ -1,112 +1,310 @@
-<main class="main-content">
+<!-- Header -->
+<header>
   <div class="container">
-    <h1>Welcome to RealEstayer</h1>
+    <a href="/" class="logo">RealEstayer</a>
+    <p class="tagline">Discover amazing places to stay around the world.</p>
 
+    <div class="social-icons">
+      <a href="#" aria-label="Facebook"><i class="fa fa-facebook-square"></i></a>
+      <a href="#" aria-label="Instagram"><i class="fa fa-instagram"></i></a>
+      <a href="#" aria-label="Twitter"><i class="fa fa-twitter"></i></a>
+      <a href="#" aria-label="YouTube"><i class="fa fa-youtube-play"></i></a>
+    </div>
+  </div>
+</header>
+
+<!-- Main Content -->
+<div class="main-content">
+  <div class="container">
+    <!-- Search Bar -->
     <div class="search-bar">
       <input
         type="text"
+        class="search-input"
+        placeholder="Search by location, region, country..."
         [(ngModel)]="searchTerm"
-        placeholder="Search by place, region, country, state, or province (optional)..."
-        class="search-input">
-      <button (click)="onSearch()" class="search-button">Search</button>
+        (keyup.enter)="onSearch()"
+      >
+      <button class="search-button" (click)="onSearch()">
+        <i class="fa fa-search"></i> Search
+      </button>
     </div>
 
-    <div *ngIf="scrapeMessage" class="scrape-message">{{ scrapeMessage }}</div>
+    <!-- Filter and Sort Controls -->
+    <div class="controls-container" *ngIf="hasSearched && !isLoading">
+      <div class="sort-container">
+        <label for="sort-select">Sort by:</label>
+        <select
+          id="sort-select"
+          [(ngModel)]="sortOption"
+          (change)="onSortChange()"
+        >
+          <option
+            *ngFor="let option of sortOptions"
+            [value]="option.value"
+          >
+            {{option.label}}
+          </option>
+        </select>
+      </div>
 
-    <div *ngIf="hasSearched">
-      <div class="filters-row">
-        <div *ngFor="let filter of filters" class="filter-dropdown">
-          <div class="filter-header" (click)="toggleCollapse(filter)">
-            <h3>{{ filter.name }}</h3>
-            <span class="toggle-icon">{{ filter.isCollapsed ? '▼' : '▲' }}</span>
+      <div class="active-filters" *ngIf="getActiveFiltersCount() > 0">
+        <span>Active filters: {{getActiveFiltersCount()}}</span>
+        <button class="clear-filters" (click)="clearFilters()">
+          Clear all
+        </button>
+      </div>
+    </div>
+
+    <div class="content-wrapper" *ngIf="hasSearched">
+      <!-- Filter Sidebar -->
+      <aside class="filters-sidebar" *ngIf="!isLoading">
+        <h2>Filters</h2>
+
+        <div
+          class="filter-dropdown"
+          *ngFor="let filter of filters"
+        >
+          <div
+            class="filter-header"
+            [ngClass]="{'open': !filter.isCollapsed}"
+            (click)="toggleCollapse(filter)"
+          >
+            <h3>
+              <i class="fa fa-{{filter.icon}}" *ngIf="filter.icon"></i>
+              {{filter.name}}
+            </h3>
+            <span class="toggle-icon">
+              <i class="fa" [ngClass]="filter.isCollapsed ? 'fa-chevron-down' : 'fa-chevron-up'"></i>
+            </span>
           </div>
-          <div class="filter-options" [class.collapsed]="filter.isCollapsed">
-            <div *ngFor="let option of filter.options" class="filter-option">
+
+          <div
+            class="filter-options"
+            [ngClass]="{'collapsed': filter.isCollapsed}"
+          >
+            <div
+              class="filter-option"
+              *ngFor="let option of filter.options"
+            >
               <input
                 type="checkbox"
-                [id]="option"
+                [id]="filter.name + '-' + option"
                 [checked]="isFilterSelected(filter.name, option)"
-                (change)="toggleFilter(filter.name, option)">
-              <label [for]="option">{{ option }}</label>
+                (change)="toggleFilter(filter.name, option)"
+              >
+              <label [for]="filter.name + '-' + option">{{option}}</label>
+            </div>
+
+            <div class="no-options" *ngIf="filter.options.length === 0">
+              No options available
             </div>
           </div>
         </div>
-      </div>
+      </aside>
 
-      <div *ngIf="filteredListings.length > 0; else noResults" class="listings">
-        <div class="listing-card" *ngFor="let listing of paginatedListings">
-          <img [src]="listing.picture_url" alt="Listing image" class="listing-image">
-          <div class="listing-details">
-            <h2 class="listing-title">{{ listing.title }}</h2>
-            <p class="listing-location">{{ listing.location }}</p>
-<!--            <p class="listing-region">-->
-<!--              {{ listing.region }}-->
-<!--              <ng-container *ngIf="listing.state">{{ listing.state }}</ng-container>-->
-<!--              <ng-container *ngIf="listing.province">{{ listing.province }}</ng-container>-->
-<!--              , {{ listing.country }}-->
-<!--            </p>-->
-            <p class="listing-price">{{ listing.price }} total</p>
-            <div class="listing-features" *ngIf="listing.features?.length">
-              <h3>Amenities:</h3>
-              <ul>
-                <li *ngFor="let feature of listing.features.slice(0, 5)">{{ feature }}</li>
-              </ul>
-              <p *ngIf="listing.features.length > 5">+{{ listing.features.length - 5 }} more</p>
+      <!-- Main Listings Area -->
+      <main class="listings-container">
+        <!-- Loading State -->
+        <div class="loading-container" *ngIf="isLoading">
+          <div class="loading-spinner"></div>
+          <p>Loading results...</p>
+        </div>
+
+        <!-- Error State -->
+        <div class="error-container" *ngIf="hasError">
+          <i class="fa fa-exclamation-circle"></i>
+          <p>{{errorMessage}}</p>
+          <button class="retry-button" (click)="getListings()">Try Again</button>
+        </div>
+
+        <!-- Empty Results -->
+        <div class="empty-results" *ngIf="!isLoading && filteredListings.length === 0 && !hasError">
+          <i class="fa fa-search"></i>
+          <h2>No results found</h2>
+          <p>Try adjusting your search or filters to find what you're looking for.</p>
+        </div>
+
+        <!-- Results Count -->
+        <div class="results-count" *ngIf="!isLoading && filteredListings.length > 0">
+          <p>Showing {{paginatedListings.length}} of {{filteredListings.length}} results</p>
+        </div>
+
+        <!-- Listing Cards -->
+        <div class="listings" *ngIf="!isLoading && filteredListings.length > 0">
+          <div class="listing-card" *ngFor="let listing of paginatedListings">
+            <img
+              [src]="listing.picture_url"
+              [alt]="listing.title"
+              class="listing-image"
+              onerror="this.src='assets/images/placeholder.jpg'"
+            >
+
+            <div class="listing-details">
+              <h2 class="listing-title">{{listing.title}}</h2>
+
+              <p class="listing-location">
+                <i class="fa fa-map-marker"></i>
+                {{listing.location}}
+              </p>
+
+              <p class="listing-region" *ngIf="listing.region">
+                <i class="fa fa-compass"></i>
+                {{listing.region}}, {{listing.country}}
+              </p>
+
+              <div class="listing-rating" *ngIf="listing.rating">
+                <span class="stars">
+                  <i class="fa fa-star" *ngFor="let star of [].constructor(Math.floor(listing.rating))"></i>
+                  <i class="fa fa-star-half-o" *ngIf="listing.rating % 1 >= 0.5"></i>
+                  <i class="fa fa-star-o" *ngFor="let star of [].constructor(5 - Math.ceil(listing.rating))"></i>
+                </span>
+              </div>
+
+              <p class="listing-price">{{listing.price}} per night</p>
+
+              <div class="listing-features" *ngIf="listing.features && listing.features.length > 0">
+                <h3>Features</h3>
+                <ul>
+                  <li *ngFor="let feature of listing.features | slice:0:3">
+                    {{feature}}
+                  </li>
+                  <li *ngIf="listing.features.length > 3" class="more-features">
+                    +{{listing.features.length - 3}} more
+                  </li>
+                </ul>
+              </div>
+
+              <a [href]="listing.url" target="_blank" class="listing-button">
+                View Property
+              </a>
             </div>
-            <a [href]="listing.url" target="_blank">View on Airbnb</a>
           </div>
         </div>
-      </div>
 
-      <ng-template #noResults>
-        <p class="no-results">
-          No results found{{ searchTerm ? ' for "' + searchTerm + '"' : '' }}
-          with the selected filters. Please try another search or adjust your filters.
-        </p>
-      </ng-template>
-
-      <div class="pagination" *ngIf="filteredListings.length > 0">
-        <button
-          class="page-button"
-          (click)="goToPage(1)"
-          [disabled]="currentPage === 1">
-          First
-        </button>
-
-        <button
-          class="page-button"
-          (click)="prevPage()"
-          [disabled]="!hasPreviousPage()">
-          Prev
-        </button>
-
-        <ng-container *ngFor="let page of getVisiblePages()">
-          <ng-container *ngIf="page === -1">
-            <span class="page-ellipsis">...</span>
-          </ng-container>
+        <!-- Pagination -->
+        <div class="pagination" *ngIf="!isLoading && totalPages > 1">
           <button
-            *ngIf="page !== -1"
-            class="page-button"
-            [class.active]="currentPage === page"
-            (click)="goToPage(page)">
-            {{ page }}
+            class="page-button prev"
+            [disabled]="!hasPreviousPage()"
+            (click)="prevPage()"
+          >
+            <i class="fa fa-chevron-left"></i>
           </button>
-        </ng-container>
 
-        <button
-          class="page-button"
-          (click)="nextPage()"
-          [disabled]="!hasNextPage()">
-          Next
-        </button>
+          <button
+            class="page-button"
+            *ngFor="let page of getVisiblePages()"
+            [ngClass]="{'active': page === currentPage}"
+            (click)="goToPage(page)"
+          >
+            {{page}}
+          </button>
 
-        <button
-          class="page-button"
-          (click)="goToPage(totalPages)"
-          [disabled]="currentPage === totalPages">
-          Last
-        </button>
+          <span class="page-ellipsis" *ngIf="getVisiblePages()[getVisiblePages().length-1] < totalPages - 1">
+            ...
+          </span>
+
+          <button
+            class="page-button"
+            *ngIf="getVisiblePages()[getVisiblePages().length-1] < totalPages"
+            (click)="goToPage(totalPages)"
+          >
+            {{totalPages}}
+          </button>
+
+          <button
+            class="page-button next"
+            [disabled]="!hasNextPage()"
+            (click)="nextPage()"
+          >
+            <i class="fa fa-chevron-right"></i>
+          </button>
+        </div>
+      </main>
+    </div>
+
+    <!-- Welcome Content (shown before search) -->
+    <div class="welcome-content" *ngIf="!hasSearched">
+      <h1>Find Your Perfect Stay</h1>
+      <p>Search for accommodations in your desired location to begin exploring.</p>
+
+      <div class="popular-destinations">
+        <h2>Popular Destinations</h2>
+        <div class="destination-grid">
+          <div class="destination-card" *ngFor="let destination of ['New York', 'Paris', 'Tokyo', 'London', 'Sydney', 'Barcelona']">
+            <div class="destination-image" [style.background-image]="'url(assets/images/' + destination.toLowerCase().replace(' ', '-') + '.jpg)'"></div>
+            <h3>{{destination}}</h3>
+            <button (click)="searchTerm = destination; onSearch()">Explore</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
-</main>
+</div>
+
+<!-- Footer -->
+<footer>
+  <div class="container">
+    <div class="footer-nav">
+      <!-- Explore Section -->
+      <div class="footer-section">
+        <h2>Explore</h2>
+        <ul>
+          <li><a href="/">Home</a></li>
+          <li><a href="/all-listings">All Listings</a></li>
+          <li><a href="/destinations">Destinations</a></li>
+          <li><a href="/trip-planner">Trip Planner</a></li>
+        </ul>
+      </div>
+
+      <!-- Host Section -->
+      <div class="footer-section">
+        <h2>Host</h2>
+        <ul>
+          <li><a href="/become-host">Become a Host</a></li>
+          <li><a href="/host-resources">Host Resources</a></li>
+          <li><a href="/community-forum">Community Forum</a></li>
+          <li><a href="/hosting-responsibly">Hosting Responsibly</a></li>
+        </ul>
+      </div>
+
+      <!-- Support Section -->
+      <div class="footer-section">
+        <h2>Support</h2>
+        <ul>
+          <li><a href="/help-center">Help Center</a></li>
+          <li><a href="/safety-information">Safety Information</a></li>
+          <li><a href="/cancellation-options">Cancellation Options</a></li>
+          <li><a href="/contact-us">Contact Us</a></li>
+        </ul>
+      </div>
+
+      <!-- Legal Section -->
+      <div class="footer-section">
+        <h2>Legal</h2>
+        <ul>
+          <li><a href="/terms">Terms of Service</a></li>
+          <li><a href="/privacy">Privacy Policy</a></li>
+          <li><a href="/cookies">Cookie Policy</a></li>
+          <li><a href="/sitemap">Site Map</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <div class="currency-selector">
+        <select>
+          <option value="USD">$ USD</option>
+          <option value="EUR">€ EUR</option>
+          <option value="GBP">£ GBP</option>
+          <option value="JPY">¥ JPY</option>
+          <option value="AUD">$ AUD</option>
+          <option value="CAD">$ CAD</option>
+        </select>
+      </div>
+
+      <p class="copyright">© 2025 RealEstayer. All rights reserved.</p>
+    </div>
+  </div>
+</footer>

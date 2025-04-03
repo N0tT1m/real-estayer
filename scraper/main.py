@@ -1,4 +1,3 @@
-# app.py
 import time
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -15,6 +14,15 @@ import re
 import os
 from waitress import serve
 from config import config
+
+# Import new routes
+from auth_routes import auth_bp
+from user_routes import user_bp
+from trip_routes import trip_bp
+from review_routes import review_bp
+
+# Import database extensions
+import db_extensions
 
 # Configure logging
 log_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs')
@@ -57,6 +65,12 @@ CORS(app, resources={r"/*": {"origins": allowed_origin}})
 DB_NAME = "airbnb"
 COLLECTION_NAME = "listings"
 
+# Register blueprints
+app.register_blueprint(auth_bp, url_prefix='/auth')
+app.register_blueprint(user_bp, url_prefix='/user')
+app.register_blueprint(trip_bp, url_prefix='/trips')
+app.register_blueprint(review_bp, url_prefix='/reviews')
+
 
 # Your existing helper functions
 def initialize_browser():
@@ -69,6 +83,7 @@ def wait_for_elements(browser, by, value, timeout=10):
         EC.presence_of_all_elements_located((by, value))
     )
 
+
 def get_text_or_empty(browser, by, value):
     try:
         element = WebDriverWait(browser, 10).until(
@@ -77,6 +92,7 @@ def get_text_or_empty(browser, by, value):
         return element.text
     except (TimeoutException, NoSuchElementException):
         return ""
+
 
 def get_price(browser, by, value):
     try:
@@ -93,6 +109,7 @@ def get_price(browser, by, value):
         logging.error(f"Error finding price elements: {by}, {value}")
         return ""
 
+
 def get_attribute_or_empty(browser, by, value, attribute):
     try:
         element = WebDriverWait(browser, 10).until(
@@ -101,6 +118,7 @@ def get_attribute_or_empty(browser, by, value, attribute):
         return element.get_attribute(attribute)
     except (TimeoutException, NoSuchElementException):
         return ""
+
 
 def get_place_urls(browser, location):
     urls = set()
@@ -142,6 +160,7 @@ def get_place_urls(browser, location):
 
     return list(urls)
 
+
 def close_modal(browser):
     try:
         close_button = WebDriverWait(browser, 5).until(
@@ -152,6 +171,7 @@ def close_modal(browser):
         logging.info("Successfully closed modal")
     except (TimeoutException, NoSuchElementException):
         logging.info("No modal found to close")
+
 
 def click_show_all_amenities(browser):
     try:
@@ -178,6 +198,7 @@ def click_show_all_amenities(browser):
         logging.warning(f"Failed to click 'Show all amenities' button: {e}")
         return False
 
+
 def scrape_features(browser):
     # Try to click the "Show all amenities" button
     if click_show_all_amenities(browser):
@@ -185,11 +206,14 @@ def scrape_features(browser):
         return [feature.text for feature in browser.find_elements(By.CLASS_NAME, "twad414")]
     else:
         # If unsuccessful, try to scrape features from the main page
-        return [feature.text for feature in browser.find_elements(By.XPATH, "//div[contains(@class, 'amenities')]//div[contains(@class, 'title')]")]
+        return [feature.text for feature in
+                browser.find_elements(By.XPATH, "//div[contains(@class, 'amenities')]//div[contains(@class, 'title')]")]
+
 
 def scrape_house_details(browser):
     logging.info(f"Scraped the details about the AirBnB.")
     return [details.text for details in browser.find_elements(By.CLASS_NAME, "l7n4lsf")]
+
 
 def scrape_place_details(browser, url):
     browser.get(url)
@@ -200,7 +224,7 @@ def scrape_place_details(browser, url):
              "description": get_text_or_empty(browser, By.CLASS_NAME, "l1h825yc"),
              "price": get_price(browser, By.CLASS_NAME, "_j1kt73"),
              "rating": get_text_or_empty(browser, By.CLASS_NAME, "r1dxllyb"),
-             "location": get_text_or_empty(browser, By.CLASS_NAME, "s1qk96pm"), # _152qbzi
+             "location": get_text_or_empty(browser, By.CLASS_NAME, "s1qk96pm"),  # _152qbzi
              "features": scrape_features(browser),
              "house_details": scrape_house_details(browser)}
 
@@ -208,6 +232,7 @@ def scrape_place_details(browser, url):
 
     logging.info(f"Scraped details for: {place['title']}")
     return place
+
 
 def scrape_region(browser, region, country):
     logging.info(f"Scraping listings for {region}, {country}")
@@ -224,6 +249,7 @@ def scrape_region(browser, region, country):
     logging.info(f"Inserted {len(inserted_ids)} listings for {region}, {country}")
 
     return len(inserted_ids)
+
 
 # Route handlers
 @app.route('/scrape-north-america', methods=['GET'])
@@ -333,6 +359,78 @@ def get_listing(listing_id):
         logger.error(f"An error occurred while fetching the listing: {e}")
         return jsonify({"error": "Failed to fetch the listing"}), 500
 
+
+# Enhanced search API
+@app.route('/search', methods=['GET'])
+def search_listings():
+    # Extract search parameters
+    location = request.args.get('location', '')
+    check_in = request.args.get('checkIn', '')
+    check_out = request.args.get('checkOut', '')
+    guests = request.args.get('guests', '')
+    price_min = request.args.get('priceMin', '')
+    price_max = request.args.get('priceMax', '')
+    property_type = request.args.getlist('propertyType')
+    amenities = request.args.getlist('amenities')
+
+    # Parse numeric parameters
+    try:
+        guests = int(guests) if guests else None
+        price_min = float(price_min) if price_min else None
+        price_max = float(price_max) if price_max else None
+    except ValueError:
+        return jsonify({"error": "Invalid numeric parameter"}), 400
+
+    # Build query
+    query = {}
+    if location:
+        query["location"] = {"$regex": location, "$options": "i"}
+
+    # Price filter
+    if price_min is not None or price_max is not None:
+        query["price"] = {}
+        if price_min is not None:
+            query["price"]["$gte"] = price_min
+        if price_max is not None:
+            query["price"]["$lte"] = price_max
+
+    # Property type filter
+    if property_type:
+        query["property_type"] = {"$in": property_type}
+
+    # Amenities filter
+    if amenities:
+        query["features"] = {"$all": amenities}
+
+    # Pagination parameters
+    page = int(request.args.get('page', 1))
+    per_page = int(request.args.get('pageSize', 20))
+
+    try:
+        # Get total count
+        total_count = db_extensions.count_documents(DB_NAME, COLLECTION_NAME, query)
+
+        # Calculate pagination
+        skip = (page - 1) * per_page
+        total_pages = (total_count + per_page - 1) // per_page
+
+        # Get listings
+        listings = db_extensions.get_listings_with_pagination(DB_NAME, COLLECTION_NAME, query, skip, per_page)
+
+        # Format response
+        response = {
+            "listings": listings,
+            "totalCount": total_count,
+            "pageCount": total_pages,
+            "currentPage": page
+        }
+
+        return jsonify(response)
+    except Exception as e:
+        logger.error(f"An error occurred during search: {e}")
+        return jsonify({"error": "Failed to perform search"}), 500
+
+
 # Add an info endpoint to check configuration
 @app.route('/info', methods=['GET'])
 def get_info():
@@ -347,6 +445,7 @@ def get_info():
         "environment": config.ENV,
         "status": "running"
     })
+
 
 @app.route('/health', methods=['GET'])
 def health_check():

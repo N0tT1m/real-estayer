@@ -1,0 +1,137 @@
+<div class="admin-container">
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>AirBnB Data Scraper</mat-card-title>
+      <mat-card-subtitle>
+        Admin Panel
+      </mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <!-- North America Scraping -->
+      <section class="scraping-section">
+        <h2>Scrape North America</h2>
+        <p class="description">
+          This will scrape all listings from the following regions:
+        </p>
+
+        <div class="regions-list">
+          <div>
+            <h3>US States ({{usStates.length}})</h3>
+            <div class="region-chips">
+              <mat-chip-set>
+                <mat-chip *ngFor="let state of usStates">{{state}}</mat-chip>
+              </mat-chip-set>
+            </div>
+          </div>
+
+          <div>
+            <h3>Canadian Provinces ({{canadianProvinces.length}})</h3>
+            <div class="region-chips">
+              <mat-chip-set>
+                <mat-chip *ngFor="let province of canadianProvinces">{{province}}</mat-chip>
+              </mat-chip-set>
+            </div>
+          </div>
+        </div>
+
+        <div class="action-buttons">
+          <button
+            mat-raised-button
+            color="primary"
+            (click)="scrapeNorthAmerica()"
+            [disabled]="scrapingInProgress">
+            <mat-icon>download</mat-icon>
+            Scrape All North America
+          </button>
+        </div>
+      </section>
+
+      <mat-divider></mat-divider>
+
+      <!-- City Scraping -->
+      <section class="scraping-section">
+        <h2>Scrape Specific City</h2>
+        <p class="description">
+          Enter a city name to scrape listings from that location.
+        </p>
+
+        <form [formGroup]="cityForm" (ngSubmit)="scrapeCity()">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>City Name</mat-label>
+            <input
+              matInput
+              formControlName="city"
+              placeholder="e.g. New York, Miami, Chicago">
+            <mat-error *ngIf="cityForm.get('city')?.hasError('required')">
+              City name is required
+            </mat-error>
+          </mat-form-field>
+
+          <div class="action-buttons">
+            <button
+              mat-raised-button
+              color="accent"
+              type="submit"
+              [disabled]="scrapingInProgress || cityForm.invalid">
+              <mat-icon>location_city</mat-icon>
+              Scrape This City
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <!-- Progress Indicator -->
+      <section *ngIf="scrapingInProgress || scrapingProgress" class="progress-section">
+        <mat-card class="progress-card">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon *ngIf="scrapingInProgress" class="spinning">sync</mat-icon>
+              <mat-icon *ngIf="!scrapingInProgress">check_circle</mat-icon>
+              Scraping Status
+            </mat-card-title>
+          </mat-card-header>
+
+          <mat-card-content>
+            <mat-progress-bar
+              *ngIf="scrapingInProgress"
+              mode="indeterminate">
+            </mat-progress-bar>
+
+            <div class="status-message">
+              <p>{{scrapingProgress?.message}}</p>
+            </div>
+
+            <!-- For North America Scraping -->
+            <div *ngIf="scrapingProgress?.total_listings !== undefined" class="stats-container">
+              <div class="stat-item">
+                <span class="stat-label">Total Listings:</span>
+                <span class="stat-value">{{scrapingProgress.total_listings}}</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">US Listings:</span>
+                <span class="stat-value">{{scrapingProgress.us_listings}}</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Canada Listings:</span>
+                <span class="stat-value">{{scrapingProgress.canada_listings}}</span>
+              </div>
+            </div>
+
+            <!-- For City Scraping -->
+            <div *ngIf="scrapingProgress?.places !== undefined" class="stats-container">
+              <div class="stat-item">
+                <span class="stat-label">Places Found:</span>
+                <span class="stat-value">{{scrapingProgress.places}}</span>
+              </div>
+              <div class="stat-item" *ngIf="scrapingProgress?.inserted_ids !== undefined">
+                <span class="stat-label">Inserted to Database:</span>
+                <span class="stat-value">{{scrapingProgress.inserted_ids}}</span>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </section>
+    </mat-card-content>
+  </mat-card>
+</div>

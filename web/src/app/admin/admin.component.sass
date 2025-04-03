@@ -1,0 +1,325 @@
+@use 'sass:color'
+@use '@angular/material' as mat
+
+// Variables
+$primary-color: #FF5A5F
+$secondary-color: #00A699
+$background-color: #F8F9FA
+$text-color: #484848
+$white: #FFFFFF
+$gray: #767676
+$light-gray: #E4E4E4
+$border-radius: 8px
+$box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08)
+$transition: all 0.3s ease
+
+// Admin Panel Styles
+.admin-container
+  max-width: 1200px
+  margin: 40px auto
+  padding: 0 20px
+
+  mat-card
+    border-radius: $border-radius
+    box-shadow: $box-shadow
+    overflow: hidden
+
+    mat-card-header
+      padding: 24px
+      border-bottom: 1px solid $light-gray
+      background-color: rgba($primary-color, 0.05)
+
+      mat-card-title
+        font-size: 1.8rem
+        font-weight: 600
+        color: $primary-color
+        margin-bottom: 8px
+
+      mat-card-subtitle
+        font-size: 1.1rem
+        color: $gray
+
+// Scraping Sections
+.scraping-section
+  padding: 30px
+  border-bottom: 1px solid $light-gray
+
+  h2
+    font-size: 1.5rem
+    color: $text-color
+    font-weight: 600
+    margin-bottom: 16px
+
+  .description
+    font-size: 1rem
+    color: $gray
+    margin-bottom: 24px
+    line-height: 1.6
+
+// City scraping section
+.city-scrape-section
+  h2
+    font-size: 1.5rem
+    color: $text-color
+    font-weight: 600
+    margin-bottom: 16px
+
+  p
+    font-size: 1rem
+    color: $gray
+    margin-bottom: 20px
+    line-height: 1.6
+
+  .city-form
+    margin-bottom: 24px
+
+    .input-container
+      margin-bottom: 16px
+
+    .city-input-label
+      display: block
+      font-size: 1rem
+      font-weight: 500
+      margin-bottom: 8px
+      color: $text-color
+
+.regions-list
+  display: grid
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr))
+  gap: 24px
+  margin-bottom: 24px
+
+  h3
+    font-size: 1.2rem
+    color: $text-color
+    font-weight: 500
+    margin-bottom: 12px
+    display: flex
+    align-items: center
+    gap: 8px
+
+  .region-chips
+    margin-bottom: 20px
+
+    mat-chip-set
+      display: flex
+      flex-wrap: wrap
+      gap: 8px
+
+      mat-chip
+        background-color: rgba($secondary-color, 0.1)
+        color: $secondary-color
+        padding: 6px 12px
+        border-radius: 16px
+        font-size: 0.9rem
+        font-weight: 500
+
+// Buttons and Actions
+.action-buttons
+  display: flex
+  justify-content: flex-start
+  gap: 16px
+  margin-top: 30px
+
+  button
+    display: flex
+    align-items: center
+    gap: 8px
+    padding: 12px 24px
+    font-size: 1rem
+    font-weight: 500
+    border-radius: $border-radius
+    transition: $transition
+
+    &[color="primary"]
+      background-color: $primary-color
+      color: $white
+
+      &:hover:not([disabled])
+        background-color: color.scale($primary-color, $lightness: -10%)
+        transform: translateY(-2px)
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15)
+
+    &[color="accent"]
+      background-color: $secondary-color
+      color: $white
+
+      &:hover:not([disabled])
+        background-color: color.scale($secondary-color, $lightness: -10%)
+        transform: translateY(-2px)
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15)
+
+    &[disabled]
+      opacity: 0.7
+      cursor: not-allowed
+
+    mat-icon
+      margin-right: 4px
+
+// Custom scrape buttons
+.do, .location
+  display: inline-flex
+  align-items: center
+  justify-content: center
+  gap: 8px
+  padding: 12px 24px
+  font-size: 1rem
+  font-weight: 500
+  border: none
+  border-radius: $border-radius
+  cursor: pointer
+  transition: $transition
+  text-decoration: none
+
+  &:hover
+    transform: translateY(-2px)
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1)
+
+.do
+  background-color: $primary-color
+  color: $white
+
+  &:hover
+    background-color: color.scale($primary-color, $lightness: -10%)
+
+.location
+  background-color: $secondary-color
+  color: $white
+
+  &:hover
+    background-color: color.scale($secondary-color, $lightness: -10%)
+
+// Form Elements
+.full-width
+  width: 100%
+
+mat-form-field
+  margin-bottom: 20px
+  width: 100%
+
+  input
+    font-size: 1rem
+    padding: 8px 0
+
+// City input field styling
+input[type="text"]
+  width: 100%
+  padding: 12px 16px
+  border: 1px solid $light-gray
+  border-radius: $border-radius
+  font-size: 1rem
+  transition: $transition
+
+  &:focus
+    border-color: $secondary-color
+    outline: none
+    box-shadow: 0 0 0 2px rgba($secondary-color, 0.2)
+
+  &::placeholder
+    color: rgba($gray, 0.7)
+
+// Form error message
+.city-error
+  color: $primary-color
+  font-size: 0.85rem
+  margin-top: 4px
+  margin-bottom: 16px
+
+// Progress Section
+.progress-section
+  padding: 30px
+
+  .progress-card
+    background-color: $white
+    border-radius: $border-radius
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05)
+    padding: 24px
+    border-left: 4px solid $secondary-color
+
+    mat-card-header
+      margin-bottom: 20px
+      background-color: transparent
+      border-bottom: none
+      padding: 0
+
+      mat-card-title
+        display: flex
+        align-items: center
+        gap: 10px
+        font-size: 1.3rem
+        color: $text-color
+        margin-bottom: 0
+
+        mat-icon
+          color: $secondary-color
+
+          &.spinning
+            animation: spin 1.5s linear infinite
+
+    mat-card-content
+      padding: 0
+
+      mat-progress-bar
+        margin-bottom: 20px
+        height: 6px
+
+        &::ng-deep .mat-progress-bar-fill::after
+          background-color: $secondary-color
+
+      .status-message
+        margin-bottom: 16px
+
+        p
+          font-size: 1rem
+          color: $text-color
+          line-height: 1.5
+
+      .stats-container
+        display: grid
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr))
+        gap: 16px
+        padding: 16px
+        background-color: rgba($light-gray, 0.3)
+        border-radius: $border-radius
+
+        .stat-item
+          display: flex
+          flex-direction: column
+          gap: 4px
+
+          .stat-label
+            font-size: 0.9rem
+            color: $gray
+
+          .stat-value
+            font-size: 1.2rem
+            font-weight: 600
+            color: $secondary-color
+
+// Animations
+@keyframes spin
+  0%
+    transform: rotate(0deg)
+  100%
+    transform: rotate(360deg)
+
+// Responsive Styles
+@media (max-width: 768px)
+  .regions-list
+    grid-template-columns: 1fr
+
+  .action-buttons
+    flex-direction: column
+
+    button
+      width: 100%
+
+@media (max-width: 576px)
+  .stats-container
+    grid-template-columns: 1fr !important
+
+  .scraping-section
+    padding: 20px
+
+  .progress-section
+    padding: 20px
