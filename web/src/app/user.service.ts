@@ -36,6 +36,13 @@ interface NotificationPreference {
 })
 export class UserService {
   private apiUrl = 'http://localhost:5000/api/users';  // Adjust to your backend URL
+  private queryApiHeaders = {
+    'Content-Type': 'application/json',
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Credentials': 'true',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Methods': 'GET,POST,DELETE',
+  };
 
   constructor(
     private http: HttpClient,
@@ -56,7 +63,7 @@ export class UserService {
     );
 
     // Real implementation would be:
-    // return this.http.get<UserProfile>(`${this.apiUrl}/profile`)
+    // return this.http.get<UserProfile>(`${this.apiUrl}/profile`, { headers: this.queryApiHeaders })
     //   .pipe(catchError(this.handleError));
   }
 
@@ -78,7 +85,7 @@ export class UserService {
     );
 
     // Real implementation would be:
-    // return this.http.put<UserProfile>(`${this.apiUrl}/profile`, profile)
+    // return this.http.put<UserProfile>(`${this.apiUrl}/profile`, profile, { headers: this.queryApiHeaders })
     //   .pipe(catchError(this.handleError));
   }
 
@@ -96,7 +103,7 @@ export class UserService {
     );
 
     // Real implementation would be:
-    // return this.http.get<any[]>(`${this.apiUrl}/saved-listings`)
+    // return this.http.get<any[]>(`${this.apiUrl}/saved-listings`, { headers: this.queryApiHeaders })
     //   .pipe(catchError(this.handleError));
   }
 
@@ -114,7 +121,7 @@ export class UserService {
     );
 
     // Real implementation would be:
-    // return this.http.get<any[]>(`${this.apiUrl}/trips`)
+    // return this.http.get<any[]>(`${this.apiUrl}/trips`, { headers: this.queryApiHeaders })
     //   .pipe(catchError(this.handleError));
   }
 
@@ -132,7 +139,7 @@ export class UserService {
     );
 
     // Real implementation would be:
-    // return this.http.get<PaymentMethod[]>(`${this.apiUrl}/payment-methods`)
+    // return this.http.get<PaymentMethod[]>(`${this.apiUrl}/payment-methods`, { headers: this.queryApiHeaders })
     //   .pipe(catchError(this.handleError));
   }
 
@@ -160,7 +167,7 @@ export class UserService {
     );
 
     // Real implementation would be:
-    // return this.http.post<PaymentMethod>(`${this.apiUrl}/payment-methods`, paymentMethod)
+    // return this.http.post<PaymentMethod>(`${this.apiUrl}/payment-methods`, paymentMethod, { headers: this.queryApiHeaders })
     //   .pipe(catchError(this.handleError));
   }
 
@@ -179,7 +186,7 @@ export class UserService {
     );
 
     // Real implementation would be:
-    // return this.http.put<any>(`${this.apiUrl}/payment-methods/${paymentMethodId}/set-default`, {})
+    // return this.http.put<any>(`${this.apiUrl}/payment-methods/${paymentMethodId}/set-default`, {}, { headers: this.queryApiHeaders })
     //   .pipe(catchError(this.handleError));
   }
 
@@ -198,7 +205,7 @@ export class UserService {
     );
 
     // Real implementation would be:
-    // return this.http.delete<any>(`${this.apiUrl}/payment-methods/${paymentMethodId}`)
+    // return this.http.delete<any>(`${this.apiUrl}/payment-methods/${paymentMethodId}`, { headers: this.queryApiHeaders })
     //   .pipe(catchError(this.handleError));
   }
 
@@ -216,7 +223,7 @@ export class UserService {
     );
 
     // Real implementation would be:
-    // return this.http.get<NotificationPreference[]>(`${this.apiUrl}/notification-preferences`)
+    // return this.http.get<NotificationPreference[]>(`${this.apiUrl}/notification-preferences`, { headers: this.queryApiHeaders })
     //   .pipe(catchError(this.handleError));
   }
 
@@ -235,7 +242,7 @@ export class UserService {
     );
 
     // Real implementation would be:
-    // return this.http.put<NotificationPreference[]>(`${this.apiUrl}/notification-preferences`, preferences)
+    // return this.http.put<NotificationPreference[]>(`${this.apiUrl}/notification-preferences`, preferences, { headers: this.queryApiHeaders })
     //   .pipe(catchError(this.handleError));
   }
 
@@ -254,7 +261,7 @@ export class UserService {
     );
 
     // Real implementation would be:
-    // return this.http.put<any>(`${this.apiUrl}/change-password`, { currentPassword, newPassword })
+    // return this.http.put<any>(`${this.apiUrl}/change-password`, { currentPassword, newPassword }, { headers: this.queryApiHeaders })
     //   .pipe(catchError(this.handleError));
   }
 
@@ -273,7 +280,7 @@ export class UserService {
     );
 
     // Real implementation would be:
-    // return this.http.post<any>(`${this.apiUrl}/delete-account-request`, {})
+    // return this.http.post<any>(`${this.apiUrl}/delete-account-request`, {}, { headers: this.queryApiHeaders })
     //   .pipe(catchError(this.handleError));
   }
 

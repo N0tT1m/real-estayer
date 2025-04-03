@@ -1,196 +1,205 @@
-from pymongo import MongoClient
-from pymongo.errors import ConnectionFailure, OperationFailure
+import pymongo
 from bson import ObjectId
 import logging
-import json
-from bson.json_util import dumps
-from sqlalchemy.orm.collections import collection
 
-# Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
-class JSONEncoder(json.JSONEncoder):
-    def default(self, o):
-        if isinstance(o, ObjectId):
-            return str(o)
-        return json.JSONEncoder.default(self, o)
+# MongoDB connection
+MONGO_URI = "mongodb://localhost:27017/"
+client = pymongo.MongoClient(MONGO_URI)
 
-class DatabaseManager:
-    def __init__(self, connection_string):
-        self.connection_string = connection_string
-        self.client = None
-        self.db = None
 
-    def connect(self):
-        try:
-            self.client = MongoClient(self.connection_string)
-            # The ismaster command is cheap and does not require auth.
-            self.client.admin.command('ismaster')
-            logging.info("Successfully connected to the database.")
-        except ConnectionFailure:
-            logging.error("Server not available. Failed to connect to the database.")
-            raise
-
-    def get_database(self, db_name):
-        if not self.client:
-            self.connect()
-        self.db = self.client[db_name]
-        return self.db
-
-    def get_collection(self, db_name, collection_name):
-        db = self.get_database(db_name)
-        return db[collection_name]
-
-    def insert_many(self, db_name, collection_name, documents):
-        collection = self.get_collection(db_name, collection_name)
-        try:
-            result = collection.insert_many(documents)
-            logging.info(f"Successfully inserted {len(result.inserted_ids)} documents.")
-            return [str(id) for id in result.inserted_ids]  # Convert ObjectIds to strings
-        except OperationFailure as e:
-            logging.error(f"An error occurred while inserting documents: {e}")
-            raise
-
-    def get_listings(self, db_name, collection_name, query=None, limit=10):
-        collection = self.get_collection(db_name, collection_name)
-        try:
-            logging.debug(f"Executing query: {query}, limit: {limit}")
-            cursor = collection.find(query or {}).limit(limit)
-            results = list(cursor)
-            logging.debug(f"Found {len(results)} results")
-            return json.loads(dumps(results))  # Convert to JSON-serializable format
-        except OperationFailure as e:
-            logging.error(f"An error occurred while fetching listings: {e}")
-            raise
-
-    def get_filters(self, db_name, collection_name, query=None, limit=10):
-        collection = self.get_collection(db_name, collection_name)
-        try:
-            logging.debug(f"Executing query: {query}, limit: {limit}")
-
-            # Aggregate to get unique features
-            features_pipeline = [
-                {"$unwind": "$features"},
-                {"$group": {"_id": "$features"}},
-                {"$sort": {"_id": 1}}
-            ]
-            features_cursor = collection.aggregate(features_pipeline)
-            features = [doc["_id"] for doc in features_cursor]
-
-            # Get the listings based on the query
-            cursor = collection.find(query or {}).limit(limit)
-            listings = list(cursor)
-
-            # Prepare the result
-            result = {
-                "features": features,
-                "listings": listings
-            }
-
-            logging.debug(f"Found {len(listings)} listings and {len(features)} unique features")
-            return json.loads(dumps(result))  # Convert to JSON-serializable format
-        except OperationFailure as e:
-            logging.error(f"An error occurred while fetching filters: {e}")
-            raise
-
-    def get_regions(self, db_name, collection_name):
-        collection = self.get_collection(db_name, collection_name)
-        try:
-            regions = collection.distinct("region")
-            logging.debug(f"Found {len(regions)} distinct regions")
-            return regions
-        except OperationFailure as e:
-            logging.error(f"An error occurred while fetching regions: {e}")
-            raise
-
-    def get_countries(self, db_name, collection_name):
-        collection = self.get_collection(db_name, collection_name)
-        try:
-            countries = collection.distinct("country")
-            logging.debug(f"Found {len(countries)} distinct countries")
-            return countries
-        except OperationFailure as e:
-            logging.error(f"An error occurred while fetching countries: {e}")
-            raise
-
-    def get_listing_by_id(self, db_name, collection_name, listing_id):
-        collection = self.get_collection(db_name, collection_name)
-        try:
-            result = collection.find_one({"_id": ObjectId(listing_id)})
-            return json.loads(dumps(result))  # Convert to JSON-serializable format
-        except OperationFailure as e:
-            logging.error(f"An error occurred while fetching the listing: {e}")
-            raise
-
-    def close_connection(self):
-        if self.client:
-            self.client.close()
-            logging.info("Database connection closed.")
-
-# Usage example
-CONNECTION_STRING = "mongodb://192.168.1.71:27017/?retryWrites=true&loadBalanced=false&serverSelectionTimeoutMS=5000&connectTimeoutMS=10000"
-DB_NAME = "airbnb"
-COLLECTION_NAME = "listings"
-
-db_manager = DatabaseManager(CONNECTION_STRING)
-
-def insert_many_into_collection(db_name, collection_name, places):
+def get_collection(db_name, collection_name):
+    """Get a MongoDB collection"""
     try:
-        db_manager.connect()
-        inserted_ids = db_manager.insert_many(db_name, collection_name, places)
-        return inserted_ids
+        db = client[db_name]
+        collection = db[collection_name]
+        return collection
     except Exception as e:
-        logging.error(f"An error occurred: {e}")
-        return []
-    finally:
-        db_manager.close_connection()
+        logger.error(f"Error connecting to MongoDB: {str(e)}")
+        return None
 
-def get_listings(db_name, collection_name, query=None, limit=0):
+
+def get_listings(db_name, collection_name, query={}, limit=0):
+    """Get listings with optional filtering and limit"""
     try:
-        db_manager.connect()
-        return db_manager.get_listings(db_name, collection_name, query, limit)
+        collection = get_collection(db_name, collection_name)
+        if limit > 0:
+            return list(collection.find(query).limit(limit))
+        return list(collection.find(query))
     except Exception as e:
-        logging.error(f"An error occurred while fetching listings: {e}")
+        logger.error(f"Error getting listings: {str(e)}")
         return []
-    finally:
-        db_manager.close_connection()
+
 
 def get_listing_by_id(db_name, collection_name, listing_id):
+    """Get a single listing by ID"""
     try:
-        db_manager.connect()
-        return db_manager.get_listing_by_id(db_name, collection_name, listing_id)
+        collection = get_collection(db_name, collection_name)
+        if ObjectId.is_valid(listing_id):
+            return collection.find_one({"_id": ObjectId(listing_id)})
+        else:
+            return collection.find_one({"id": listing_id})
     except Exception as e:
-        logging.error(f"An error occurred while fetching the listing: {e}")
+        logger.error(f"Error getting listing by ID: {str(e)}")
         return None
-    finally:
-        db_manager.close_connection()
 
-def get_regions(db_name, collection_name):
-    try:
-        db_manager.connect()
-        return db_manager.get_regions(db_name, collection_name)
-    except Exception as e:
-        logging.error(f"An error occurred while fetching regions: {e}")
-        return []
-    finally:
-        db_manager.close_connection()
 
-def get_countries(db_name, collection_name):
+def insert_many_into_collection(db_name, collection_name, items):
+    """Insert multiple items into a collection"""
     try:
-        db_manager.connect()
-        return db_manager.get_countries(db_name, collection_name)
+        collection = get_collection(db_name, collection_name)
+        result = collection.insert_many(items)
+        return result.inserted_ids
     except Exception as e:
-        logging.error(f"An error occurred while fetching countries: {e}")
+        logger.error(f"Error inserting many into collection: {str(e)}")
         return []
-    finally:
-        db_manager.close_connection()
 
-def get_filters(db_name, collection_name, query=None, limit=0):
+
+def insert_one_into_collection(db_name, collection_name, item):
+    """Insert one item into a collection and return the ID"""
     try:
-        db_manager.connect()
-        return db_manager.get_filters(db_name, collection_name, query, limit)
+        collection = get_collection(db_name, collection_name)
+        result = collection.insert_one(item)
+        return str(result.inserted_id)
     except Exception as e:
-        logging.error(f"An error occurred while fetching regions: {e}")
+        logger.error(f"Error inserting into collection: {str(e)}")
+        return None
+
+
+def get_user_by_email(db_name, collection_name, email):
+    """Get a user by email"""
+    try:
+        collection = get_collection(db_name, collection_name)
+        return collection.find_one({"email": email})
+    except Exception as e:
+        logger.error(f"Error getting user by email: {str(e)}")
+        return None
+
+
+def get_user_by_id(db_name, collection_name, user_id):
+    """Get a user by ID"""
+    try:
+        collection = get_collection(db_name, collection_name)
+        if ObjectId.is_valid(user_id):
+            return collection.find_one({"_id": ObjectId(user_id)})
+        else:
+            return collection.find_one({"id": user_id})
+    except Exception as e:
+        logger.error(f"Error getting user by ID: {str(e)}")
+        return None
+
+
+def update_user(db_name, collection_name, user_id, update_data):
+    """Update a user's profile"""
+    try:
+        collection = get_collection(db_name, collection_name)
+        result = collection.update_one(
+            {"_id": ObjectId(user_id)},
+            {"$set": update_data}
+        )
+        return result.modified_count > 0
+    except Exception as e:
+        logger.error(f"Error updating user: {str(e)}")
+        return False
+
+
+def update_user_password(db_name, collection_name, user_id, hashed_password):
+    """Update a user's password"""
+    try:
+        collection = get_collection(db_name, collection_name)
+        result = collection.update_one(
+            {"_id": ObjectId(user_id)},
+            {"$set": {"password": hashed_password}}
+        )
+        return result.modified_count > 0
+    except Exception as e:
+        logger.error(f"Error updating user password: {str(e)}")
+        return False
+
+
+def mark_user_for_deletion(db_name, collection_name, user_id):
+    """Mark a user for deletion"""
+    try:
+        collection = get_collection(db_name, collection_name)
+        result = collection.update_one(
+            {"_id": ObjectId(user_id)},
+            {"$set": {"pendingDeletion": True}}
+        )
+        return result.modified_count > 0
+    except Exception as e:
+        logger.error(f"Error marking user for deletion: {str(e)}")
+        return False
+
+
+def get_user_trips(db_name, collection_name, user_id, status=None):
+    """Get trips for a user with optional status filter"""
+    try:
+        collection = get_collection(db_name, collection_name)
+        query = {"userId": user_id}
+        if status:
+            query["status"] = status
+        return list(collection.find(query))
+    except Exception as e:
+        logger.error(f"Error getting user trips: {str(e)}")
         return []
-    finally:
-        db_manager.close_connection()
+
+
+def get_user_payment_methods(db_name, collection_name, user_id):
+    """Get payment methods for a user"""
+    try:
+        collection = get_collection(db_name, collection_name)
+        return list(collection.find({"userId": user_id}))
+    except Exception as e:
+        logger.error(f"Error getting user payment methods: {str(e)}")
+        return []
+
+
+def add_saved_listing(db_name, collection_name, user_id, listing_id):
+    """Add a listing to user's saved listings"""
+    try:
+        collection = get_collection(db_name, collection_name)
+        result = collection.update_one(
+            {"_id": ObjectId(user_id)},
+            {"$addToSet": {"savedListings": listing_id}}
+        )
+        return result.modified_count > 0
+    except Exception as e:
+        logger.error(f"Error adding saved listing: {str(e)}")
+        return False
+
+
+def remove_saved_listing(db_name, collection_name, user_id, listing_id):
+    """Remove a listing from user's saved listings"""
+    try:
+        collection = get_collection(db_name, collection_name)
+        result = collection.update_one(
+            {"_id": ObjectId(user_id)},
+            {"$pull": {"savedListings": listing_id}}
+        )
+        return result.modified_count > 0
+    except Exception as e:
+        logger.error(f"Error removing saved listing: {str(e)}")
+        return False
+
+
+def get_filters(db_name, collection_name, query={}, limit=10):
+    """Get distinct filters available based on query"""
+    try:
+        collection = get_collection(db_name, collection_name)
+        features = collection.distinct("features", query)
+        regions = collection.distinct("region", query)
+        countries = collection.distinct("country", query)
+
+        return {
+            "features": features,
+            "regions": regions,
+            "countries": countries
+        }
+    except Exception as e:
+        logger.error(f"Error getting filters: {str(e)}")
+        return {
+            "features": [],
+            "regions": [],
+            "countries": []
+        }

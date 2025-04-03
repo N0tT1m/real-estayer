@@ -1,14 +1,8 @@
-// src/services/auth.service.ts
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { BehaviorSubject, Observable, throwError, of } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 import { Router } from '@angular/router';
-
-const environment = {
-  production: false,
-  apiUrl: 'http://localhost:5000'
-};
 
 interface User {
   id: string;
@@ -27,7 +21,8 @@ interface AuthResponse {
   providedIn: 'root'
 })
 export class AuthService {
-  private apiUrl = 'http://localhost:5000/auth';
+  // Use the appropriate URL based on your setup
+  private apiUrl = 'http://localhost:5000/auth'; // Direct URL
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser = this.currentUserSubject.asObservable();
   private tokenExpirationTimer: any;
@@ -54,59 +49,55 @@ export class AuthService {
   }
 
   login(email: string, password: string): Observable<any> {
-    // For development without a backend, use mock data
-    if (email === 'demo@example.com' && password === 'password') {
-      const mockUser = {
-        id: 'user-1',
-        name: 'Demo User',
-        email: 'demo@example.com',
-        role: 'user'
-      };
+    console.log('Login attempt for:', email);
 
-      const mockResponse = {
-        message: 'Login successful',
-        token: 'mock-jwt-token',
-        user: mockUser
-      };
+    // Standard headers for JSON API
+    const headers = new HttpHeaders().set('Content-Type', 'application/json');
 
-      this.handleAuthentication(mockResponse);
-      return of(mockResponse);
-    }
-
-    // If not using mock data, make actual API call
-    return this.http.post<AuthResponse>(`${this.apiUrl}/login`, { email, password })
-      .pipe(
-        tap(response => this.handleAuthentication(response)),
-        catchError(this.handleError)
-      );
+    // Make the API call
+    return this.http.post<AuthResponse>(
+      `${this.apiUrl}/login`,
+      { email, password },
+      { headers }
+    ).pipe(
+      tap(response => {
+        console.log('Login successful:', response);
+        this.handleAuthentication(response);
+      }),
+      catchError(error => {
+        console.error('Login error:', error);
+        return this.handleError(error);
+      })
+    );
   }
 
   signup(name: string, email: string, password: string): Observable<any> {
-    // For development without a backend, use mock data
-    if (email.includes('@example.com')) {
-      const mockUser = {
-        id: 'user-' + Math.floor(Math.random() * 1000),
-        name,
-        email,
-        role: 'user'
-      };
+    console.log('Attempting to sign up:', { name, email });
 
-      const mockResponse = {
-        message: 'User registered successfully',
-        token: 'mock-jwt-token',
-        user: mockUser
-      };
+    // Standard headers for JSON API
+    const headers = new HttpHeaders().set('Content-Type', 'application/json');
 
-      this.handleAuthentication(mockResponse);
-      return of(mockResponse);
-    }
+    console.log('Sending signup request to:', `${this.apiUrl}/signup`);
+    console.log('With data:', { name, email, password: '********' });
 
-    // If not using mock data, make actual API call
-    return this.http.post<AuthResponse>(`${this.apiUrl}/signup`, { name, email, password })
-      .pipe(
-        tap(response => this.handleAuthentication(response)),
-        catchError(this.handleError)
-      );
+    return this.http.post<AuthResponse>(
+      `${this.apiUrl}/signup`,
+      { name, email, password },
+      { headers }
+    ).pipe(
+      tap(response => {
+        console.log('Signup successful:', response);
+        this.handleAuthentication(response);
+      }),
+      catchError(error => {
+        console.error('Signup error:', error);
+        console.error('Error details:', error.message, error.status, error.statusText);
+        if (error.error) {
+          console.error('Server response:', error.error);
+        }
+        return this.handleError(error);
+      })
+    );
   }
 
   logout() {
@@ -144,6 +135,28 @@ export class AuthService {
     return this.currentUserValue?.role === 'admin';
   }
 
+  // Add JWT token to requests that need authentication
+  getAuthHeaders(): HttpHeaders {
+    const token = this.token;
+    if (token) {
+      return new HttpHeaders({
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      });
+    }
+    return new HttpHeaders({ 'Content-Type': 'application/json' });
+  }
+
+  // Example of an authenticated request
+  getUserProfile(): Observable<any> {
+    return this.http.get(
+      `${this.apiUrl}/user`,
+      { headers: this.getAuthHeaders() }
+    ).pipe(
+      catchError(this.handleError)
+    );
+  }
+
   private handleAuthentication(response: AuthResponse) {
     // Set expiration to 1 hour from now
     const expirationDate = new Date(new Date().getTime() + 3600 * 1000);
@@ -157,10 +170,18 @@ export class AuthService {
   }
 
   private handleError(error: any) {
+    console.error('API error in auth service', error);
+
     let errorMessage = 'An unknown error occurred!';
 
     if (error.error && error.error.message) {
       errorMessage = error.error.message;
+    } else if (error.status === 0) {
+      errorMessage = 'Cannot connect to server. Please check your connection.';
+    } else if (error.status === 403) {
+      errorMessage = 'Access denied. You may not have permission to perform this action.';
+    } else if (error.status === 401) {
+      errorMessage = 'Unauthorized. Please log in again.';
     }
 
     return throwError(() => errorMessage);

@@ -58,14 +58,107 @@ US_STATES = [
 
 # Initialize Flask app
 app = Flask(__name__)
-allowed_origin = os.getenv('CORS_ORIGIN', 'http://localhost:6969')
-CORS(app, resources={r"/*": {"origins": allowed_origin}})
+
+# Configure CORS to allow specific origins
+CORS(app,
+     resources={r"/*": {"origins": ["http://localhost:6969", "http://localhost:4200"]}},
+     supports_credentials=True,
+     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+     allow_headers=["Content-Type", "Authorization", "Access-Control-Allow-Origin",
+                    "Access-Control-Allow-Headers", "Access-Control-Allow-Methods"])
+
+
+# Global after_request handler to add CORS headers to all responses
+@app.after_request
+def add_cors_headers(response):
+    origin = request.headers.get('Origin')
+    if origin in ['http://localhost:6969', 'http://localhost:4200']:
+        response.headers.add('Access-Control-Allow-Origin', origin)
+    else:
+        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:6969')
+
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS')
+    response.headers.add('Access-Control-Allow-Credentials', 'true')
+    return response
+
+
+# Global OPTIONS route handler
+@app.route('/', defaults={'path': ''}, methods=['OPTIONS'])
+@app.route('/<path:path>', methods=['OPTIONS'])
+def options_handler(path):
+    response = make_response()
+    origin = request.headers.get('Origin')
+    if origin in ['http://localhost:6969', 'http://localhost:4200']:
+        response.headers.add('Access-Control-Allow-Origin', origin)
+    else:
+        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:6969')
+
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS')
+    response.headers.add('Access-Control-Allow-Credentials', 'true')
+    return response
+
+
+# Import database extensions and other modules
+import db_extensions
 
 # Database configuration
 DB_NAME = "airbnb"
 COLLECTION_NAME = "listings"
 
-# Register blueprints
+# Now import blueprints but don't register them yet
+from auth_routes import auth_bp
+from user_routes import user_bp
+from trip_routes import trip_bp
+from review_routes import review_bp
+
+
+# Create a global before_request handler for JWT verification
+# We'll attach this to specific blueprints that need authentication
+def jwt_required_except(exempt_endpoints=[]):
+    def decorator(bp):
+        @bp.before_request
+        def verify_jwt():
+            # Skip JWT verification for exempted endpoints or OPTIONS requests
+            if request.endpoint in exempt_endpoints or request.method == 'OPTIONS':
+                logger.debug(f"Skipping JWT verification for {request.endpoint}")
+                return None
+
+            logger.debug(f"Verifying JWT for {request.endpoint}")
+
+            # Get the token from Authorization header
+            auth_header = request.headers.get('Authorization')
+            if not auth_header or not auth_header.startswith('Bearer '):
+                logger.warning("No valid Authorization header found")
+                return jsonify({'message': 'Token is missing'}), 401
+
+            token = auth_header.split(' ')[1]
+
+            # Token validation would normally go here
+            # For now, just log that we would validate it
+            logger.debug(f"Would validate token: {token[:10]}...")
+
+            # In a real app, you would validate the token and set user info
+            # For this example, we're just demonstrating the pattern
+
+            return None  # Continue with the request
+
+        return bp
+
+    return decorator
+
+
+# Add explicit exemptions for auth endpoints that shouldn't require auth
+auth_exempt_endpoints = ['auth.signup', 'auth.login']
+jwt_required_except(auth_exempt_endpoints)(auth_bp)
+
+# Apply JWT verification to other blueprints that need authentication
+jwt_required_except([])(user_bp)  # No exemptions for user routes
+jwt_required_except([])(trip_bp)  # No exemptions for trip routes
+jwt_required_except([])(review_bp)  # No exemptions for review routes
+
+# Now register all blueprints
 app.register_blueprint(auth_bp, url_prefix='/auth')
 app.register_blueprint(user_bp, url_prefix='/user')
 app.register_blueprint(trip_bp, url_prefix='/trips')
