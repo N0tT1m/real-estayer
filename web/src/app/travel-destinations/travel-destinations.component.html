@@ -1,1 +1,191 @@
-<p>travel-destinations works!</p>
+<div class="destinations-container">
+  <div class="destinations-header">
+    <h1>Explore Adventure Destinations</h1>
+    <p>Discover unique experiences in extraordinary places around the world</p>
+  </div>
+
+  <div class="adventure-styles-slider">
+    <div class="style-card" *ngFor="let style of adventureStyles" (click)="filterByStyle(style.id)">
+      <div class="style-icon">{{ style.icon }}</div>
+      <h3>{{ style.name }}</h3>
+      <p>{{ style.description }}</p>
+    </div>
+  </div>
+
+  <!-- Loading Indicator -->
+  <div class="loading-indicator" *ngIf="loading">
+    <div class="loading-spinner"></div>
+    <p>Discovering amazing destinations...</p>
+  </div>
+
+  <!-- Featured Destinations -->
+  <div class="featured-destinations" *ngIf="!loading">
+    <h2>Featured Destinations</h2>
+    <div class="destinations-grid">
+      <div class="destination-card" *ngFor="let destination of featuredDestinations">
+        <div class="destination-image-container">
+          <img [src]="destination.image" alt="{{ destination.name }}" class="destination-image">
+          <div class="destination-rating">
+            <span class="rating-icon">★</span>
+            <span class="rating-value">{{ destination.rating.toFixed(1) }}</span>
+          </div>
+          <div class="save-button">
+            <svg viewBox="0 0 24 24" width="24" height="24">
+              <path d="M16.5 3c-1.74 0-3.41.81-4.5 2.09C10.91 3.81 9.24 3 7.5 3 4.42 3 2 5.42 2 8.5c0 3.78 3.4 6.86 8.55 11.54L12 21.35l1.45-1.32C18.6 15.36 22 12.28 22 8.5 22 5.42 19.58 3 16.5 3zm-4.4 15.55l-.1.1-.1-.1C7.14 14.24 4 11.39 4 8.5 4 6.5 5.5 5 7.5 5c1.54 0 3.04.99 3.57 2.36h1.87C13.46 5.99 14.96 5 16.5 5c2 0 3.5 1.5 3.5 3.5 0 2.89-3.14 5.74-7.9 10.05z"/>
+            </svg>
+          </div>
+        </div>
+        <div class="destination-details">
+          <h3>{{ destination.name }}</h3>
+          <p class="destination-location">{{ destination.country }}</p>
+          <p class="destination-price">Avg. {{ destination.avgPrice }}/person</p>
+          <p class="destination-description">{{ destination.description }}</p>
+          <div class="adventure-styles">
+            <span class="style" *ngFor="let style of destination.popularFor">{{ style }}</span>
+          </div>
+          <button class="explore-button" (click)="exploreDestination(destination.name)">
+            Explore {{ destination.adventuresCount }} experiences
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Trending Cities -->
+  <div class="trending-cities" *ngIf="!loading">
+    <h2>Trending Cities</h2>
+    <div class="cities-grid">
+      <div class="city-card" *ngFor="let city of trendingCities" (click)="exploreDestination(city.name)">
+        <img [src]="city.image" alt="{{ city.name }}" class="city-image">
+        <div class="city-overlay">
+          <h3>{{ city.name }}</h3>
+          <p>{{ city.country }}</p>
+          <span class="adventure-count">{{ city.adventureCount }}+ experiences</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Seasonal Picks -->
+  <div class="seasonal-picks" *ngIf="!loading">
+    <h2>Spring Adventures</h2>
+    <p>Perfect experiences for the spring season</p>
+    <div class="seasonal-grid">
+      <div class="seasonal-card" *ngFor="let destination of seasonalPicks" (click)="exploreDestination(destination.name)">
+        <img [src]="destination.image" alt="{{ destination.name }}" class="seasonal-image">
+        <div class="seasonal-details">
+          <h3>{{ destination.name }}</h3>
+          <p>{{ destination.country }}</p>
+          <div class="seasonal-tags">
+            <span class="tag highlight">{{ destination.popularFor[0] }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Adventure Inspiration -->
+  <div class="adventure-inspiration" *ngIf="!loading">
+    <h2>Adventure Inspiration</h2>
+    <div class="inspiration-grid">
+      <div class="inspiration-card">
+        <div class="inspiration-image">
+          <img src="assets/images/coastal-adventures.jpg" alt="Coastal Adventures">
+        </div>
+        <div class="inspiration-content">
+          <h3>Coastal Escapes</h3>
+          <p>Discover stunning coastal adventures beyond ordinary beaches</p>
+          <button class="inspiration-button" (click)="filterByStyle('coastal')">Explore</button>
+        </div>
+      </div>
+
+      <div class="inspiration-card">
+        <div class="inspiration-image">
+          <img src="assets/images/alpine-adventures.jpg" alt="Alpine Expeditions">
+        </div>
+        <div class="inspiration-content">
+          <h3>Alpine Expeditions</h3>
+          <p>Conquer heights and discover breathtaking mountain vistas</p>
+          <button class="inspiration-button" (click)="filterByStyle('alpine')">Explore</button>
+        </div>
+      </div>
+
+      <div class="inspiration-card">
+        <div class="inspiration-image">
+          <img src="assets/images/urban-adventures.jpg" alt="Urban Discoveries">
+        </div>
+        <div class="inspiration-content">
+          <h3>Urban Discoveries</h3>
+          <p>Experience authentic local culture in vibrant city settings</p>
+          <button class="inspiration-button" (click)="filterByStyle('urban')">Explore</button>
+        </div>
+      </div>
+
+      <div class="inspiration-card">
+        <div class="inspiration-image">
+          <img src="assets/images/rural-adventures.jpg" alt="Rural Immersions">
+        </div>
+        <div class="inspiration-content">
+          <h3>Rural Immersions</h3>
+          <p>Connect with nature and traditions in peaceful countryside settings</p>
+          <button class="inspiration-button" (click)="filterByStyle('rural')">Explore</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Travel Guides -->
+  <div class="travel-guides" *ngIf="!loading">
+    <h2>Expert Travel Guides</h2>
+    <p>Insights and recommendations from our adventure experts</p>
+
+    <div class="guides-grid">
+      <div class="guide-card" *ngFor="let guide of travelGuides">
+        <div class="guide-image">
+          <img [src]="guide.image" alt="{{ guide.title }}">
+          <div class="guide-category">{{ guide.category }}</div>
+        </div>
+        <div class="guide-content">
+          <h3>{{ guide.title }}</h3>
+          <p class="guide-excerpt">{{ guide.excerpt }}</p>
+          <div class="guide-meta">
+            <div class="guide-author">
+              <img [src]="guide.authorImage" alt="{{ guide.author }}">
+              <span>{{ guide.author }}</span>
+            </div>
+            <span class="guide-date">{{ guide.date | date:'mediumDate' }}</span>
+          </div>
+          <button class="read-guide-button" (click)="readGuide(guide.id)">Read Guide</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="view-all-guides">
+      <button class="view-all-button" (click)="viewAllGuides()">View All Travel Guides</button>
+    </div>
+  </div>
+
+  <!-- Error State -->
+  <div class="error-state" *ngIf="errorMessage">
+    <div class="error-icon">
+      <svg viewBox="0 0 24 24" width="48" height="48">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+      </svg>
+    </div>
+    <h3>Oops! Something went wrong</h3>
+    <p>{{ errorMessage }}</p>
+    <button class="retry-button" (click)="loadAllData()">Try Again</button>
+  </div>
+
+  <!-- Newsletter -->
+  <div class="adventure-newsletter">
+    <div class="newsletter-content">
+      <h2>Join the Adventure Community</h2>
+      <p>Subscribe for exclusive travel inspiration, destination guides, and special offers</p>
+      <form class="newsletter-form" (ngSubmit)="subscribeNewsletter()">
+        <input type="email" placeholder="Your email address" [(ngModel)]="newsletterEmail" name="email">
+        <button type="submit">Join the Journey</button>
+      </form>
+    </div>
+  </div>
+</div>

@@ -4,14 +4,23 @@ import { BehaviorSubject, Observable, throwError, of } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 import { Router } from '@angular/router';
 
-interface User {
+export interface User {
   id: string;
   name: string;
   email: string;
   role: string;
+  profileImage?: string;
+  phone?: string;
+  bio?: string;
+  isHost?: boolean;
+  isCreator?: boolean;
+  joinDate?: Date;
+  expiryDate?: string;
+  expMonth?: string;
+  expYear?: string;
 }
 
-interface AuthResponse {
+export interface AuthResponse {
   message: string;
   token: string;
   user: User;
@@ -155,6 +164,13 @@ export class AuthService {
     ).pipe(
       catchError(this.handleError)
     );
+  }
+
+  // Update user details after profile changes
+  updateUserDetails(user: User): void {
+    // Update stored user data
+    localStorage.setItem('userData', JSON.stringify(user));
+    this.currentUserSubject.next(user);
   }
 
   private handleAuthentication(response: AuthResponse) {

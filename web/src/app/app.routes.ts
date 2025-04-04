@@ -21,7 +21,7 @@ export const routes: Routes = [
   },
   {
     path: 'home',
-    component: DestinationsComponent, // Uncomment after creating DestinationsComponent
+    component: HomeComponent, // Uncomment after creating DestinationsComponent
     title: 'RealEstayer - Discover Amazing Places'
   },
   {

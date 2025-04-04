@@ -1,0 +1,642 @@
+@use 'sass:color'
+
+// Import variables and mixins (update the path to match your project structure)
+// You may need to use relative paths or configure includePaths in angular.json
+$primary-color: #FF5A5F
+$secondary-color: #00A699
+$background-color: #F7F7F7
+$text-color: #484848
+$white: #FFFFFF
+$gray: #767676
+$light-gray: #E4E4E4
+$border-radius: 8px
+$box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08)
+$transition: all 0.3s ease
+
+// Additional colors
+$success-color: #34C759
+$warning-color: #FF9500
+$danger-color: #FF3B30
+$info-color: #5AC8FA
+$highlight-color: #FFF8E6
+
+// Button mixins (simplified versions of what would be in _mixins.sass)
+@mixin secondary-button
+  padding: 12px 24px
+  font-size: 1rem
+  font-weight: 600
+  background-color: $white
+  color: $primary-color
+  border: 1px solid $primary-color
+  border-radius: $border-radius
+  cursor: pointer
+  transition: $transition
+  display: inline-flex
+  align-items: center
+  justify-content: center
+  gap: 8px
+
+  &:hover
+    background-color: rgba($primary-color, 0.05)
+    transform: translateY(-2px)
+
+@mixin card
+  background-color: $white
+  border-radius: $border-radius
+  box-shadow: $box-shadow
+  overflow: hidden
+  transition: $transition
+
+  &:hover
+    transform: translateY(-4px)
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1)
+
+// Destinations component styles
+.destinations-container
+  padding: 40px 0
+  max-width: 1200px
+  margin: 0 auto
+
+  .destinations-header
+    text-align: center
+    margin-bottom: 48px
+
+    h1
+      font-size: 2.5rem
+      margin-bottom: 12px
+      color: $text-color
+      font-weight: 700
+
+    p
+      font-size: 1.2rem
+      color: $gray
+
+.adventure-styles-slider
+  display: flex
+  gap: 20px
+  overflow-x: auto
+  padding: 10px 0 30px
+  margin-bottom: 40px
+
+  &::-webkit-scrollbar
+    height: 6px
+
+  &::-webkit-scrollbar-track
+    background: $light-gray
+    border-radius: 10px
+
+  &::-webkit-scrollbar-thumb
+    background: $gray
+    border-radius: 10px
+
+    &:hover
+      background: darken($gray, 10%)
+
+  .style-card
+    flex: 0 0 220px
+    padding: 24px
+    background-color: $white
+    border-radius: $border-radius
+    box-shadow: $box-shadow
+    text-align: center
+    cursor: pointer
+    transition: $transition
+
+    &:hover
+      transform: translateY(-8px)
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1)
+
+    .style-icon
+      font-size: 2rem
+      margin-bottom: 16px
+      color: $primary-color
+
+    h3
+      font-size: 1.2rem
+      margin-bottom: 10px
+      color: $text-color
+
+    p
+      font-size: 0.9rem
+      color: $gray
+
+// Loading indicator
+.loading-indicator
+  text-align: center
+  padding: 60px 0
+
+  .loading-spinner
+    width: 50px
+    height: 50px
+    border: 4px solid rgba($primary-color, 0.2)
+    border-top: 4px solid $primary-color
+    border-radius: 50%
+    margin: 0 auto 20px
+    animation: spin 1s linear infinite
+
+  p
+    font-size: 1.1rem
+    color: $gray
+
+@keyframes spin
+  0%
+    transform: rotate(0deg)
+  100%
+    transform: rotate(360deg)
+
+.featured-destinations,
+.trending-cities,
+.seasonal-picks,
+.adventure-inspiration,
+.travel-guides
+  margin-bottom: 60px
+
+  h2
+    font-size: 2rem
+    margin-bottom: 24px
+    color: $text-color
+    font-weight: 600
+
+  p
+    font-size: 1.1rem
+    color: $gray
+    margin-bottom: 30px
+
+.destinations-grid
+  display: grid
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr))
+  gap: 30px
+
+  .destination-card
+    @include card
+    display: flex
+    flex-direction: column
+
+    .destination-image-container
+      position: relative
+
+      .destination-image
+        width: 100%
+        height: 240px
+        object-fit: cover
+        border-radius: $border-radius $border-radius 0 0
+
+      .destination-rating
+        position: absolute
+        top: 16px
+        right: 16px
+        background-color: $primary-color
+        color: $white
+        padding: 4px 10px
+        border-radius: 20px
+        font-size: 0.9rem
+        font-weight: 600
+        display: flex
+        align-items: center
+        gap: 4px
+
+        .rating-icon
+          font-size: 1rem
+
+      .save-button
+        position: absolute
+        top: 16px
+        left: 16px
+        background-color: $white
+        border-radius: 50%
+        width: 36px
+        height: 36px
+        display: flex
+        justify-content: center
+        align-items: center
+        cursor: pointer
+        transition: $transition
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1)
+
+        &:hover
+          transform: scale(1.1)
+
+        svg
+          fill: $primary-color
+          width: 20px
+          height: 20px
+
+    .destination-details
+      padding: 24px
+      flex-grow: 1
+      display: flex
+      flex-direction: column
+
+      h3
+        font-size: 1.5rem
+        margin-bottom: 8px
+        color: $text-color
+
+      .destination-location
+        font-size: 1rem
+        color: $gray
+        margin-bottom: 8px
+
+      .destination-price
+        font-size: 1.1rem
+        font-weight: 600
+        color: $secondary-color
+        margin-bottom: 16px
+
+      .destination-description
+        font-size: 0.95rem
+        line-height: 1.6
+        color: $text-color
+        margin-bottom: 16px
+
+      .adventure-styles
+        display: flex
+        flex-wrap: wrap
+        gap: 8px
+        margin-bottom: 16px
+
+        .style
+          font-size: 0.8rem
+          padding: 4px 12px
+          background-color: rgba($light-gray, 0.7)
+          border-radius: 20px
+          color: $text-color
+
+      .explore-button
+        @include secondary-button
+        margin-top: auto
+
+.cities-grid
+  display: grid
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr))
+  gap: 24px
+
+  .city-card
+    position: relative
+    border-radius: $border-radius
+    overflow: hidden
+    aspect-ratio: 1 / 1
+    cursor: pointer
+
+    &::after
+      content: ""
+      position: absolute
+      top: 0
+      left: 0
+      width: 100%
+      height: 100%
+      background: linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.6))
+      z-index: 1
+      transition: $transition
+
+    &:hover::after
+      background: linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.7))
+
+    &:hover .city-image
+      transform: scale(1.05)
+
+    .city-image
+      width: 100%
+      height: 100%
+      object-fit: cover
+      transition: transform 0.5s ease
+
+    .city-overlay
+      position: absolute
+      bottom: 0
+      left: 0
+      width: 100%
+      padding: 20px
+      z-index: 2
+
+      h3
+        font-size: 1.5rem
+        color: $white
+        margin-bottom: 8px
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3)
+
+      p
+        font-size: 1rem
+        color: rgba($white, 0.9)
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3)
+
+      .adventure-count
+        display: inline-block
+        margin-top: 8px
+        font-size: 0.9rem
+        color: $white
+        background-color: rgba($primary-color, 0.8)
+        padding: 4px 10px
+        border-radius: 20px
+
+.seasonal-grid
+  display: grid
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr))
+  gap: 24px
+
+  .seasonal-card
+    @include card
+    cursor: pointer
+
+    .seasonal-image
+      width: 100%
+      height: 200px
+      object-fit: cover
+
+    .seasonal-details
+      padding: 16px
+
+      h3
+        font-size: 1.2rem
+        margin-bottom: 8px
+        color: $text-color
+
+      p
+        font-size: 0.9rem
+        color: $gray
+        margin-bottom: 12px
+
+      .seasonal-tags
+        display: flex
+        gap: 8px
+
+        .tag
+          font-size: 0.8rem
+          padding: 4px 12px
+          border-radius: 20px
+
+          &.highlight
+            background-color: $highlight-color
+            color: darken($highlight-color, 60%)
+
+.inspiration-grid
+  display: grid
+  grid-template-columns: repeat(auto-fill, minmax(270px, 1fr))
+  gap: 24px
+
+  .inspiration-card
+    background-color: $white
+    border-radius: $border-radius
+    overflow: hidden
+    box-shadow: $box-shadow
+    transition: $transition
+
+    &:hover
+      transform: translateY(-8px)
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1)
+
+    .inspiration-image
+      width: 100%
+      height: 180px
+      overflow: hidden
+
+      img
+        width: 100%
+        height: 100%
+        object-fit: cover
+        transition: transform 0.5s ease
+
+    &:hover .inspiration-image img
+      transform: scale(1.05)
+
+    .inspiration-content
+      padding: 20px
+      text-align: center
+
+      h3
+        font-size: 1.3rem
+        margin-bottom: 12px
+        color: $text-color
+
+      p
+        font-size: 0.95rem
+        color: $gray
+        margin-bottom: 20px
+
+      .inspiration-button
+        @include secondary-button
+        padding: 10px 20px
+
+.guides-grid
+  display: grid
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr))
+  gap: 24px
+  margin-bottom: 30px
+
+  .guide-card
+    @include card
+    display: flex
+    flex-direction: column
+
+    .guide-image
+      position: relative
+      height: 200px
+
+      img
+        width: 100%
+        height: 100%
+        object-fit: cover
+
+      .guide-category
+        position: absolute
+        top: 16px
+        left: 16px
+        background-color: $secondary-color
+        color: $white
+        padding: 4px 10px
+        border-radius: 20px
+        font-size: 0.8rem
+        font-weight: 500
+
+    .guide-content
+      padding: 20px
+      flex-grow: 1
+      display: flex
+      flex-direction: column
+
+      h3
+        font-size: 1.3rem
+        margin-bottom: 12px
+        color: $text-color
+
+      .guide-excerpt
+        font-size: 0.95rem
+        line-height: 1.6
+        color: $text-color
+        margin-bottom: 16px
+        flex-grow: 1
+
+      .guide-meta
+        display: flex
+        justify-content: space-between
+        align-items: center
+        margin-bottom: 16px
+
+        .guide-author
+          display: flex
+          align-items: center
+          gap: 8px
+
+          img
+            width: 32px
+            height: 32px
+            border-radius: 50%
+            object-fit: cover
+
+          span
+            font-size: 0.9rem
+            color: $text-color
+
+        .guide-date
+          font-size: 0.85rem
+          color: $gray
+
+      .read-guide-button
+        @include secondary-button
+        width: 100%
+        padding: 10px
+
+.view-all-guides
+  text-align: center
+
+  .view-all-button
+    background-color: transparent
+    border: 2px solid $primary-color
+    color: $primary-color
+    padding: 12px 24px
+    border-radius: $border-radius
+    font-size: 1rem
+    font-weight: 600
+    cursor: pointer
+    transition: $transition
+
+    &:hover
+      background-color: rgba($primary-color, 0.05)
+
+.error-state
+  text-align: center
+  padding: 60px 0
+  background-color: rgba($light-gray, 0.3)
+  border-radius: $border-radius
+  margin-bottom: 60px
+
+  .error-icon
+    margin-bottom: 20px
+
+    svg
+      fill: $danger-color
+
+  h3
+    font-size: 1.5rem
+    margin-bottom: 12px
+    color: $text-color
+
+  p
+    font-size: 1.1rem
+    color: $gray
+    margin-bottom: 24px
+    max-width: 500px
+    margin-left: auto
+    margin-right: auto
+
+  .retry-button
+    background-color: $primary-color
+    color: $white
+    padding: 12px 24px
+    border: none
+    border-radius: $border-radius
+    font-size: 1rem
+    font-weight: 600
+    cursor: pointer
+    transition: $transition
+
+    &:hover
+      background-color: darken($primary-color, 10%)
+
+.adventure-newsletter
+  background-color: $secondary-color
+  color: $white
+  padding: 60px 0
+  border-radius: $border-radius
+  margin-bottom: 60px
+  text-align: center
+
+  .newsletter-content
+    max-width: 600px
+    margin: 0 auto
+
+    h2
+      font-size: 2rem
+      margin-bottom: 16px
+
+    p
+      font-size: 1.1rem
+      margin-bottom: 24px
+      opacity: 0.9
+
+    .newsletter-form
+      display: flex
+      gap: 12px
+
+      @media (max-width: 576px)
+        flex-direction: column
+
+      input
+        flex-grow: 1
+        padding: 12px 16px
+        font-size: 1rem
+        border: none
+        border-radius: $border-radius
+        background-color: rgba($white, 0.9)
+        color: $text-color
+
+        &:focus
+          outline: none
+          background-color: $white
+
+      button
+        padding: 12px 24px
+        background-color: $primary-color
+        color: $white
+        border: none
+        border-radius: $border-radius
+        font-size: 1rem
+        font-weight: 600
+        cursor: pointer
+        transition: $transition
+        white-space: nowrap
+
+        &:hover
+          background-color: darken($primary-color, 10%)
+
+// Responsive styles
+@media (max-width: 992px)
+  .destinations-grid
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr))
+
+  .guides-grid,
+  .inspiration-grid
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr))
+
+@media (max-width: 768px)
+  .destinations-container
+    padding: 20px
+
+  .destinations-header
+    h1
+      font-size: 2rem
+
+    p
+      font-size: 1rem
+
+  .seasonal-grid,
+  .cities-grid
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr))
+
+@media (max-width: 576px)
+  .destinations-grid
+    grid-template-columns: 1fr
+
+  .adventure-styles-slider
+    .style-card
+      flex: 0 0 160px

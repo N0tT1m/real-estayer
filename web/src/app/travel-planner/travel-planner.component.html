@@ -1,22 +1,22 @@
 <div class="planner-container">
   <div class="planner-header">
-    <h1>Travel Planner</h1>
-    <p>Plan and organize your trips all in one place</p>
+    <h1>Journey Planner</h1>
+    <p>Plan and organize your adventures all in one place</p>
   </div>
 
   <div class="planner-actions">
-    <button class="create-button" (click)="showNewItineraryForm = true" *ngIf="!showNewItineraryForm">
+    <button class="create-button" (click)="showNewJourneyForm = true" *ngIf="!showNewJourneyForm">
       <svg viewBox="0 0 24 24" width="24" height="24">
         <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
       </svg>
-      Create New Trip
+      Create New Journey
     </button>
   </div>
 
   <!-- Loading State -->
   <div class="loading-state" *ngIf="loading">
     <div class="loading-spinner"></div>
-    <p>Loading your travel plans...</p>
+    <p>Loading your journey plans...</p>
   </div>
 
   <!-- Error State -->
@@ -28,19 +28,19 @@
     </div>
     <h3>Oops! Something went wrong</h3>
     <p>{{ error }}</p>
-    <button class="retry-button" (click)="loadTrips()">Try Again</button>
+    <button class="retry-button" (click)="loadJourneys()">Try Again</button>
   </div>
 
-  <!-- New Itinerary Form -->
-  <div class="new-itinerary-form" *ngIf="showNewItineraryForm">
-    <h2>Create New Trip</h2>
-    <form [formGroup]="itineraryForm" (ngSubmit)="createItinerary()">
+  <!-- New Journey Form -->
+  <div class="new-journey-form" *ngIf="showNewJourneyForm">
+    <h2>Create New Journey</h2>
+    <form [formGroup]="journeyForm" (ngSubmit)="createJourney()">
       <div class="form-row">
         <div class="form-group">
-          <label for="tripName">Trip Name</label>
-          <input type="text" id="tripName" formControlName="name" class="form-control">
+          <label for="journeyName">Journey Name</label>
+          <input type="text" id="journeyName" formControlName="name" class="form-control">
           <div class="error-message" *ngIf="submitted && f['name'].errors">
-            <div *ngIf="f['name'].errors['required']">Trip name is required</div>
+            <div *ngIf="f['name'].errors['required']">Journey name is required</div>
           </div>
         </div>
 
@@ -88,90 +88,119 @@
         <textarea id="notes" formControlName="notes" class="form-control textarea"></textarea>
       </div>
 
+      <div class="journey-theme">
+        <h3>Journey Theme</h3>
+        <p>Select a theme to get personalized experience recommendations</p>
+        <div class="theme-options">
+          <div class="theme-option" *ngFor="let theme of journeyThemes">
+            <input type="radio" [id]="'theme-' + theme.id" [value]="theme.id" formControlName="theme">
+            <label [for]="'theme-' + theme.id">
+              <span class="theme-icon" [innerHTML]="theme.icon"></span>
+              <span class="theme-name">{{ theme.name }}</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
       <div class="form-actions">
-        <button type="button" class="cancel-button" (click)="cancelNewItinerary()">Cancel</button>
+        <button type="button" class="cancel-button" (click)="cancelNewJourney()">Cancel</button>
         <button type="submit" class="save-button" [disabled]="formSubmitting">
           <span *ngIf="formSubmitting" class="spinner-small"></span>
-          Create Trip
+          Create Journey
         </button>
       </div>
     </form>
   </div>
 
-  <!-- Itinerary List -->
-  <div class="itinerary-list" *ngIf="!showNewItineraryForm && itineraries.length > 0 && !loading">
-    <div class="itinerary-card" *ngFor="let itinerary of itineraries">
-      <div class="itinerary-header">
-        <h3>{{ itinerary.name }}</h3>
-        <div class="itinerary-dates">
+  <!-- Journey List -->
+  <div class="journey-list" *ngIf="!showNewJourneyForm && journeys.length > 0 && !loading">
+    <div class="journey-card" *ngFor="let journey of journeys">
+      <div class="journey-header">
+        <h3>{{ journey.name }}</h3>
+        <div class="journey-dates">
           <svg viewBox="0 0 24 24" width="18" height="18">
             <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19a2 2 0 002 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7v-5z"/>
           </svg>
-          {{ itinerary.startDate | date:'mediumDate' }} - {{ itinerary.endDate | date:'mediumDate' }}
+          {{ journey.startDate | date:'mediumDate' }} - {{ journey.endDate | date:'mediumDate' }}
         </div>
       </div>
 
-      <div class="itinerary-destination">
+      <div class="journey-destination">
         <svg viewBox="0 0 24 24" width="18" height="18">
           <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
         </svg>
-        {{ itinerary.destination }}
+        {{ journey.destination }}
       </div>
 
-      <div class="itinerary-budget">
+      <div class="journey-budget">
         <svg viewBox="0 0 24 24" width="18" height="18">
           <path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/>
         </svg>
-        ${{ itinerary.totalBudget }}
+        ${{ journey.totalBudget }}
       </div>
 
-      <div class="itinerary-stats">
+      <div class="journey-theme" *ngIf="journey.theme">
+        <span class="theme-tag">{{ journey.theme }}</span>
+      </div>
+
+      <div class="journey-stats">
         <div class="stat-item">
-          <div class="stat-value">{{ itinerary.activities.length }}</div>
+          <div class="stat-value">{{ journey.activities.length }}</div>
           <div class="stat-label">Activities</div>
         </div>
         <div class="stat-item">
-          <div class="stat-value">{{ itinerary.accommodations.length }}</div>
+          <div class="stat-value">{{ journey.accommodations.length }}</div>
           <div class="stat-label">Stays</div>
         </div>
         <div class="stat-item">
-          <div class="stat-value">{{ itinerary.transportation.length }}</div>
+          <div class="stat-value">{{ journey.transportation.length }}</div>
           <div class="stat-label">Transport</div>
         </div>
       </div>
 
-      <div class="itinerary-actions">
-        <button class="view-button" (click)="viewItinerary(itinerary.id)">View Details</button>
-        <button class="edit-button" (click)="editItinerary(itinerary.id)">Edit</button>
-        <button class="delete-button" (click)="deleteItinerary(itinerary.id)">Delete</button>
+      <div class="journey-progress">
+        <div class="progress-label">Journey planning progress</div>
+        <div class="progress-bar">
+          <div class="progress-fill" [style.width]="getJourneyProgress(journey) + '%'"></div>
+        </div>
+        <div class="progress-value">{{ getJourneyProgress(journey) }}%</div>
+      </div>
+
+      <div class="journey-actions">
+        <button class="view-button" (click)="viewJourney(journey.id)">View Details</button>
+        <button class="edit-button" (click)="editJourney(journey.id)">Edit</button>
+        <button class="delete-button" (click)="deleteJourney(journey.id)">Delete</button>
       </div>
     </div>
   </div>
 
   <!-- Empty State -->
-  <div class="empty-state" *ngIf="!showNewItineraryForm && itineraries.length === 0 && !loading && !error">
+  <div class="empty-state" *ngIf="!showNewJourneyForm && journeys.length === 0 && !loading && !error">
     <div class="empty-illustration">
       <svg viewBox="0 0 24 24" width="64" height="64">
         <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
       </svg>
     </div>
-    <h2>No trips planned yet</h2>
-    <p>Start creating your travel itineraries and keep all your plans organized in one place.</p>
-    <button class="create-button" (click)="showNewItineraryForm = true">
+    <h2>No journeys planned yet</h2>
+    <p>Start creating your adventure itineraries and keep all your plans organized in one place.</p>
+    <button class="create-button" (click)="showNewJourneyForm = true">
       <svg viewBox="0 0 24 24" width="24" height="24">
         <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
       </svg>
-      Create Your First Trip
+      Create Your First Journey
     </button>
   </div>
 
-  <!-- Itinerary Detail View -->
-  <div class="itinerary-detail" *ngIf="selectedItinerary">
+  <!-- Journey Detail View -->
+  <div class="journey-detail" *ngIf="selectedJourney">
     <div class="detail-header">
       <div class="header-content">
-        <h2>{{ selectedItinerary.name }}</h2>
-        <p class="detail-dates">{{ selectedItinerary.startDate | date:'mediumDate' }} - {{ selectedItinerary.endDate | date:'mediumDate' }}</p>
-        <p class="detail-location">{{ selectedItinerary.destination }}</p>
+        <h2>{{ selectedJourney.name }}</h2>
+        <p class="detail-dates">{{ selectedJourney.startDate | date:'mediumDate' }} - {{ selectedJourney.endDate | date:'mediumDate' }}</p>
+        <p class="detail-location">{{ selectedJourney.destination }}</p>
+        <div class="detail-theme" *ngIf="selectedJourney.theme">
+          <span class="theme-tag">{{ selectedJourney.theme }}</span>
+        </div>
       </div>
       <button class="close-button" (click)="closeDetail()">
         <svg viewBox="0 0 24 24" width="24" height="24">
@@ -187,58 +216,83 @@
             <h3>Budget Tracker</h3>
             <div class="budget-progress">
               <div class="budget-bar">
-                <div class="budget-spent" [style.width]="(totalSpent / selectedItinerary.totalBudget * 100) + '%'"></div>
+                <div class="budget-spent" [style.width]="(totalSpent / selectedJourney.totalBudget * 100) + '%'"></div>
               </div>
               <div class="budget-stats">
                 <div class="budget-total">
                   <span>Total Budget:</span>
-                  <span>${{ selectedItinerary.totalBudget }}</span>
+                  <span>${{ selectedJourney.totalBudget }}</span>
                 </div>
                 <div class="budget-spent">
                   <span>Spent So Far:</span>
                   <span>${{ totalSpent }}</span>
                 </div>
-                <div class="budget-remaining" [ngClass]="{'over-budget': totalSpent > selectedItinerary.totalBudget}">
+                <div class="budget-remaining" [ngClass]="{'over-budget': totalSpent > selectedJourney.totalBudget}">
                   <span>Remaining:</span>
-                  <span>${{ selectedItinerary.totalBudget - totalSpent }}</span>
+                  <span>${{ selectedJourney.totalBudget - totalSpent }}</span>
                 </div>
               </div>
             </div>
           </div>
 
-          <div class="trip-summary">
-            <h3>Trip Summary</h3>
+          <div class="journey-summary">
+            <h3>Journey Summary</h3>
             <div class="summary-grid">
               <div class="summary-card">
                 <h4>Duration</h4>
-                <p>{{ tripDuration }} days</p>
+                <p>{{ journeyDuration }} days</p>
               </div>
               <div class="summary-card">
                 <h4>Activities</h4>
-                <p>{{ selectedItinerary.activities.length }} planned</p>
+                <p>{{ selectedJourney.activities.length }} planned</p>
               </div>
               <div class="summary-card">
                 <h4>Accommodations</h4>
-                <p>{{ selectedItinerary.accommodations.length }} booked</p>
+                <p>{{ selectedJourney.accommodations.length }} booked</p>
               </div>
               <div class="summary-card">
                 <h4>Transportation</h4>
-                <p>{{ selectedItinerary.transportation.length }} booked</p>
+                <p>{{ selectedJourney.transportation.length }} booked</p>
               </div>
             </div>
           </div>
 
-          <div class="notes-section" *ngIf="selectedItinerary.notes">
-            <h3>Trip Notes</h3>
-            <div class="notes-content">
-              {{ selectedItinerary.notes }}
+          <div class="recommended-experiences" *ngIf="recommendedExperiences.length > 0">
+            <h3>Recommended Experiences</h3>
+            <p>Based on your journey theme and destination</p>
+
+            <div class="experiences-grid">
+              <div class="experience-card" *ngFor="let experience of recommendedExperiences">
+                <div class="experience-image">
+                  <img [src]="experience.image" alt="{{ experience.title }}">
+                  <div class="experience-price">{{ experience.price }}</div>
+                </div>
+                <div class="experience-details">
+                  <h4>{{ experience.title }}</h4>
+                  <p class="experience-location">{{ experience.location }}</p>
+                  <div class="experience-rating" *ngIf="experience.rating">
+                    <span class="star-icon">★</span>
+                    <span>{{ experience.rating }}</span>
+                  </div>
+                  <button class="add-experience-button" (click)="addToJourney(experience.id)">
+                    Add to Journey
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div class="trip-timeline">
-            <h3>Trip Timeline</h3>
+          <div class="notes-section" *ngIf="selectedJourney.notes">
+            <h3>Journey Notes</h3>
+            <div class="notes-content">
+              {{ selectedJourney.notes }}
+            </div>
+          </div>
+
+          <div class="journey-timeline">
+            <h3>Journey Timeline</h3>
             <div class="timeline">
-              <div class="timeline-item" *ngFor="let day of tripDays; let i = index">
+              <div class="timeline-item" *ngFor="let day of journeyDays; let i = index">
                 <div class="timeline-date">
                   <div class="date-marker">{{ i + 1 }}</div>
                   <div class="date-details">
@@ -265,15 +319,15 @@
                   </div>
                   <div class="timeline-event activity" *ngFor="let activity of getActivitiesForDay(day)">
                     <div class="event-time">{{ activity.time }}</div>
-                    <div class="event-type">Activity</div>
+                    <div class="event-type">Experience</div>
                     <div class="event-details">
                       {{ activity.name }}
                       <div class="event-sub">{{ activity.location }}</div>
                     </div>
                   </div>
                   <div class="empty-day" *ngIf="!hasEventsForDay(day)">
-                    No activities planned for this day.
-                    <button class="add-activity-button" (click)="addActivityForm(day)">Add Activity</button>
+                    No experiences planned for this day.
+                    <button class="add-activity-button" (click)="addActivityForm(day)">Add Experience</button>
                   </div>
                 </div>
               </div>
@@ -282,24 +336,24 @@
         </div>
       </mat-tab>
 
-      <mat-tab label="Activities">
-        <div class="activities-content">
+      <mat-tab label="Experiences">
+        <div class="experiences-content">
           <div class="section-header">
-            <h3>Activities & Experiences</h3>
+            <h3>Adventures & Experiences</h3>
             <button class="add-button" (click)="showActivityForm()">
               <svg viewBox="0 0 24 24" width="16" height="16">
                 <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
               </svg>
-              Add Activity
+              Add Experience
             </button>
           </div>
 
-          <div class="activities-form" *ngIf="showingActivityForm">
-            <h4>{{ editingActivity ? 'Edit Activity' : 'Add New Activity' }}</h4>
+          <div class="experiences-form" *ngIf="showingActivityForm">
+            <h4>{{ editingActivity ? 'Edit Experience' : 'Add New Experience' }}</h4>
             <form [formGroup]="activityForm" (ngSubmit)="saveActivity()">
               <div class="form-row">
                 <div class="form-group">
-                  <label for="activityName">Activity Name</label>
+                  <label for="activityName">Experience Name</label>
                   <input type="text" id="activityName" formControlName="name" class="form-control">
                 </div>
 
@@ -328,11 +382,23 @@
                 </div>
 
                 <div class="form-group">
-                  <label class="checkbox-label">
-                    <input type="checkbox" formControlName="booked">
-                    <span>Already Booked</span>
-                  </label>
+                  <label for="activityType">Experience Type</label>
+                  <select id="activityType" formControlName="type" class="form-control">
+                    <option value="adventure">Adventure</option>
+                    <option value="cultural">Cultural</option>
+                    <option value="culinary">Culinary</option>
+                    <option value="wellness">Wellness</option>
+                    <option value="sightseeing">Sightseeing</option>
+                    <option value="other">Other</option>
+                  </select>
                 </div>
+              </div>
+
+              <div class="form-group">
+                <label class="checkbox-label">
+                  <input type="checkbox" formControlName="booked">
+                  <span>Already Booked</span>
+                </label>
               </div>
 
               <div class="form-group full-width">
@@ -350,8 +416,22 @@
             </form>
           </div>
 
-          <div class="activities-list" *ngIf="!showingActivityForm && selectedItinerary.activities.length > 0">
-            <div class="activity-card" *ngFor="let activity of selectedItinerary.activities">
+          <div class="activities-list" *ngIf="!showingActivityForm && selectedJourney.activities.length > 0">
+            <div class="activity-card" *ngFor="let activity of selectedJourney.activities">
+              <div class="activity-icon" [ngClass]="activity.type || 'adventure'">
+                <!-- Adventure Icon -->
+                <svg *ngIf="activity.type === 'adventure'" viewBox="0 0 24 24" width="24" height="24">
+                  <path d="M13.5.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.62 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67zM11.71 19c-1.78 0-3.22-1.4-3.22-3.14 0-1.62 1.05-2.76 2.81-3.12 1.77-.36 3.6-1.21 4.62-2.58.39 1.29.59 2.65.59 4.04 0 2.65-2.15 4.8-4.8 4.8z"/>
+                </svg>
+                <!-- Cultural Icon -->
+                <svg *ngIf="activity.type === 'cultural'" viewBox="0 0 24 24" width="24" height="24">
+                  <path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72L12 15l5-2.73v3.72z"/>
+                </svg>
+                <!-- Default Icon -->
+                <svg *ngIf="!activity.type || activity.type === 'other'" viewBox="0 0 24 24" width="24" height="24">
+                  <path d="M12 10.9c-.61 0-1.1.49-1.1 1.1s.49 1.1 1.1 1.1c.61 0 1.1-.49 1.1-1.1s-.49-1.1-1.1-1.1zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm2.19 12.19L6 18l3.81-8.19L18 6l-3.81 8.19z"/>
+                </svg>
+              </div>
               <div class="activity-info">
                 <h4>{{ activity.name }}</h4>
                 <p class="activity-datetime">
@@ -368,13 +448,13 @@
             </div>
           </div>
 
-          <div class="empty-state" *ngIf="!showingActivityForm && selectedItinerary.activities.length === 0">
-            <p>No activities added yet. Start planning your experiences!</p>
+          <div class="empty-state" *ngIf="!showingActivityForm && selectedJourney.activities.length === 0">
+            <p>No experiences added yet. Start planning your adventures!</p>
             <button class="add-button" (click)="showActivityForm()">
               <svg viewBox="0 0 24 24" width="16" height="16">
                 <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
               </svg>
-              Add Activity
+              Add Experience
             </button>
           </div>
         </div>
@@ -402,8 +482,27 @@
                 </div>
 
                 <div class="form-group">
+                  <label for="accommodationType">Type</label>
+                  <select id="accommodationType" formControlName="type" class="form-control">
+                    <option value="hotel">Hotel</option>
+                    <option value="apartment">Apartment</option>
+                    <option value="guesthouse">Guesthouse</option>
+                    <option value="hostel">Hostel</option>
+                    <option value="resort">Resort</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
                   <label for="accommodationLocation">Location</label>
                   <input type="text" id="accommodationLocation" formControlName="location" class="form-control">
+                </div>
+
+                <div class="form-group">
+                  <label for="accommodationUrl">Booking URL (optional)</label>
+                  <input type="text" id="accommodationUrl" formControlName="url" class="form-control">
                 </div>
               </div>
 
@@ -446,8 +545,18 @@
             </form>
           </div>
 
-          <div class="accommodations-list" *ngIf="!showingAccommodationForm && selectedItinerary.accommodations.length > 0">
-            <div class="accommodation-card" *ngFor="let accommodation of selectedItinerary.accommodations">
+          <div class="accommodations-list" *ngIf="!showingAccommodationForm && selectedJourney.accommodations.length > 0">
+            <div class="accommodation-card" *ngFor="let accommodation of selectedJourney.accommodations">
+              <div class="accommodation-icon" [ngClass]="accommodation.type || 'hotel'">
+                <!-- Hotel Icon -->
+                <svg *ngIf="!accommodation.type || accommodation.type === 'hotel'" viewBox="0 0 24 24" width="24" height="24">
+                  <path d="M7 13c1.66 0 3-1.34 3-3S8.66 7 7 7s-3 1.34-3 3 1.34 3 3 3zm12-6h-8v7H3V5H1v15h2v-3h18v3h2v-9c0-2.21-1.79-4-4-4z"/>
+                </svg>
+                <!-- Apartment Icon -->
+                <svg *ngIf="accommodation.type === 'apartment'" viewBox="0 0 24 24" width="24" height="24">
+                  <path d="M17 11V3H7v4H3v14h8v-4h2v4h8V11h-4zM7 19H5v-2h2v2zm0-4H5v-2h2v2zm0-4H5V9h2v2zm4 4H9v-2h2v2zm0-4H9V9h2v2zm0-4H9V5h2v2zm4 8h-2v-2h2v2zm0-4h-2V9h2v2zm0-4h-2V5h2v2zm4 12h-2v-2h2v2zm0-4h-2v-2h2v2z"/>
+                </svg>
+              </div>
               <div class="accommodation-info">
                 <h4>{{ accommodation.name }}</h4>
                 <p class="accommodation-location">{{ accommodation.location }}</p>
@@ -466,7 +575,7 @@
             </div>
           </div>
 
-          <div class="empty-state" *ngIf="!showingAccommodationForm && selectedItinerary.accommodations.length === 0">
+          <div class="empty-state" *ngIf="!showingAccommodationForm && selectedJourney.accommodations.length === 0">
             <p>No accommodations added yet. Where will you be staying?</p>
             <button class="add-button" (click)="showAccommodationForm()">
               <svg viewBox="0 0 24 24" width="16" height="16">
@@ -501,6 +610,7 @@
                     <option value="train">Train</option>
                     <option value="car">Car Rental</option>
                     <option value="bus">Bus</option>
+                    <option value="ferry">Ferry</option>
                     <option value="other">Other</option>
                   </select>
                 </div>
@@ -574,15 +684,24 @@
             </form>
           </div>
 
-          <div class="transportation-list" *ngIf="!showingTransportationForm && selectedItinerary.transportation.length > 0">
-            <div class="transportation-card" *ngFor="let transport of selectedItinerary.transportation">
+          <div class="transportation-list" *ngIf="!showingTransportationForm && selectedJourney.transportation.length > 0">
+            <div class="transportation-card" *ngFor="let transport of selectedJourney.transportation">
               <div class="transportation-type" [ngClass]="transport.type">
-                <svg viewBox="0 0 24 24" width="24" height="24">
-                  <path *ngIf="transport.type === 'flight'" d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
-                  <path *ngIf="transport.type === 'train'" d="M12 2c-4 0-8 .5-8 4v9.5C4 17.43 5.57 19 7.5 19L6 20.5v.5h2.23l2-2H14l2 2h2v-.5L16.5 19c1.93 0 3.5-1.57 3.5-3.5V6c0-3.5-3.58-4-8-4zM7.5 17c-.83 0-1.5-.67-1.5-1.5S6.67 14 7.5 14s1.5.67 1.5 1.5S8.33 17 7.5 17zm3.5-7H6V6h5v4zm5.5 7c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm1.5-7h-5V6h5v4z"/>
-                  <path *ngIf="transport.type === 'car'" d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/>
-                  <path *ngIf="transport.type === 'bus'" d="M4 16c0 .88.39 1.67 1 2.22V20c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h8v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1.78c.61-.55 1-1.34 1-2.22V6c0-3.5-3.58-4-8-4s-8 .5-8 4v10zm3.5 1c-.83 0-1.5-.67-1.5-1.5S6.67 14 7.5 14s1.5.67 1.5 1.5S8.33 17 7.5 17zm9 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm1.5-6H6V6h12v5z"/>
-                  <path *ngIf="transport.type === 'other'" d="M18.41 5.8L17.2 4.59c-.78-.78-2.05-.78-2.83 0l-2.68 2.68L3 15.96V20h4.04l8.74-8.74 2.63-2.63c.79-.78.79-2.05 0-2.83zM6.21 18H5v-1.21l8.66-8.66 1.21 1.21L6.21 18zM11 20l4-4h6v4H11z"/>
+                <!-- Flight Icon -->
+                <svg *ngIf="transport.type === 'flight'" viewBox="0 0 24 24" width="24" height="24">
+                  <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
+                </svg>
+                <!-- Train Icon -->
+                <svg *ngIf="transport.type === 'train'" viewBox="0 0 24 24" width="24" height="24">
+                  <path d="M12 2c-4 0-8 .5-8 4v9.5C4 17.43 5.57 19 7.5 19L6 20.5v.5h2.23l2-2H14l2 2h2v-.5L16.5 19c1.93 0 3.5-1.57 3.5-3.5V6c0-3.5-3.58-4-8-4zM7.5 17c-.83 0-1.5-.67-1.5-1.5S6.67 14 7.5 14s1.5.67 1.5 1.5S8.33 17 7.5 17zm3.5-7H6V6h5v4zm5.5 7c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm1.5-7h-5V6h5v4z"/>
+                </svg>
+                <!-- Car Icon -->
+                <svg *ngIf="transport.type === 'car'" viewBox="0 0 24 24" width="24" height="24">
+                  <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/>
+                </svg>
+                <!-- Default/Other Icon -->
+                <svg *ngIf="!transport.type || transport.type === 'other'" viewBox="0 0 24 24" width="24" height="24">
+                  <path d="M4 16c0 .88.39 1.67 1 2.22V20c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h8v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1.78c.61-.55 1-1.34 1-2.22V6c0-3.5-3.58-4-8-4s-8 .5-8 4v10zm3.5 1c-.83 0-1.5-.67-1.5-1.5S6.67 14 7.5 14s1.5.67 1.5 1.5S8.33 17 7.5 17zm9 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm1.5-6H6V6h12v5z"/>
                 </svg>
               </div>
               <div class="transportation-info">
@@ -605,7 +724,7 @@
             </div>
           </div>
 
-          <div class="empty-state" *ngIf="!showingTransportationForm && selectedItinerary.transportation.length === 0">
+          <div class="empty-state" *ngIf="!showingTransportationForm && selectedJourney.transportation.length === 0">
             <p>No transportation added yet. How will you get there?</p>
             <button class="add-button" (click)="showTransportationForm()">
               <svg viewBox="0 0 24 24" width="16" height="16">
@@ -613,6 +732,143 @@
               </svg>
               Add Transportation
             </button>
+          </div>
+        </div>
+      </mat-tab>
+
+      <mat-tab label="Packing List">
+        <div class="packing-list-content">
+          <div class="section-header">
+            <h3>Packing List</h3>
+            <div class="packing-actions">
+              <button class="add-button" (click)="showPackingItemForm()">
+                <svg viewBox="0 0 24 24" width="16" height="16">
+                  <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                </svg>
+                Add Item
+              </button>
+              <button class="template-button" (click)="usePackingTemplate()">
+                <svg viewBox="0 0 24 24" width="16" height="16">
+                  <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10H7v-2h10v2z"/>
+                </svg>
+                Use Template
+              </button>
+            </div>
+          </div>
+
+          <div class="packing-form" *ngIf="showingPackingItemForm">
+            <h4>Add Packing Item</h4>
+            <form [formGroup]="packingItemForm" (ngSubmit)="savePackingItem()">
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="itemName">Item Name</label>
+                  <input type="text" id="itemName" formControlName="name" class="form-control">
+                </div>
+
+                <div class="form-group">
+                  <label for="itemCategory">Category</label>
+                  <select id="itemCategory" formControlName="category" class="form-control">
+                    <option value="essentials">Essentials</option>
+                    <option value="clothing">Clothing</option>
+                    <option value="toiletries">Toiletries</option>
+                    <option value="electronics">Electronics</option>
+                    <option value="documents">Documents</option>
+                    <option value="gear">Adventure Gear</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="itemQuantity">Quantity</label>
+                  <input type="number" id="itemQuantity" formControlName="quantity" class="form-control">
+                </div>
+
+                <div class="form-group">
+                  <label class="checkbox-label">
+                    <input type="checkbox" formControlName="packed">
+                    <span>Already Packed</span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="form-actions">
+                <button type="button" class="cancel-button" (click)="cancelPackingItemForm()">Cancel</button>
+                <button type="submit" class="save-button" [disabled]="formSubmitting">
+                  <span *ngIf="formSubmitting" class="spinner-small"></span>
+                  Save
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <div class="packing-categories" *ngIf="!showingPackingItemForm">
+            <div class="packing-category" *ngFor="let category of packingCategories">
+              <div class="category-header" (click)="toggleCategory(category.id)">
+                <h4>
+                  <svg viewBox="0 0 24 24" width="18" height="18" *ngIf="category.id === 'essentials'">
+                    <path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+                  </svg>
+                  {{ category.name }}
+                  <span class="item-count">{{ getCategoryCount(category.id) }} items</span>
+                </h4>
+                <span class="category-progress">{{ getCategoryProgress(category.id) }}%</span>
+                <svg viewBox="0 0 24 24" width="18" height="18" class="toggle-icon" [class.rotated]="!category.isCollapsed">
+                  <path d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"/>
+                </svg>
+              </div>
+
+              <div class="category-items" [ngClass]="{'collapsed': category.isCollapsed}">
+                <div class="packing-item" *ngFor="let item of getItemsByCategory(category.id)">
+                  <div class="item-check">
+                    <input type="checkbox" [id]="'item-' + item.id" [(ngModel)]="item.packed" (change)="updatePackingItem(item)">
+                    <label [for]="'item-' + item.id"></label>
+                  </div>
+                  <div class="item-details">
+                    <span class="item-name" [class.packed]="item.packed">{{ item.name }}</span>
+                    <span class="item-quantity" *ngIf="item.quantity > 1">x{{ item.quantity }}</span>
+                  </div>
+                  <div class="item-actions">
+                    <button class="item-edit" (click)="editPackingItem(item.id)">
+                      <svg viewBox="0 0 24 24" width="16" height="16">
+                        <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                      </svg>
+                    </button>
+                    <button class="item-delete" (click)="deletePackingItem(item.id)">
+                      <svg viewBox="0 0 24 24" width="16" height="16">
+                        <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="empty-category" *ngIf="getItemsByCategory(category.id).length === 0">
+                  <p>No items in this category.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="empty-state" *ngIf="!showingPackingItemForm && getTotalPackingItems() === 0">
+            <svg viewBox="0 0 24 24" width="48" height="48">
+              <path d="M18 6h-2c0-2.21-1.79-4-4-4S8 3.79 8 6H6c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-8 4c0 .55-.45 1-1 1s-1-.45-1-1V8h2v2zm3 0c0 .55-.45 1-1 1s-1-.45-1-1V8h2v2zm3 0c0 .55-.45 1-1 1s-1-.45-1-1V8h2v2z"/>
+            </svg>
+            <p>Your packing list is empty. Start adding items or use a template.</p>
+            <div class="empty-actions">
+              <button class="add-button" (click)="showPackingItemForm()">
+                <svg viewBox="0 0 24 24" width="16" height="16">
+                  <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                </svg>
+                Add Item
+              </button>
+              <button class="template-button" (click)="usePackingTemplate()">
+                <svg viewBox="0 0 24 24" width="16" height="16">
+                  <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10H7v-2h10v2z"/>
+                </svg>
+                Use Template
+              </button>
+            </div>
           </div>
         </div>
       </mat-tab>

@@ -1,138 +1,124 @@
-// src/app/listings.service.ts
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
-const environment = {
-  production: false,
-  apiUrl: 'http://localhost:5000'
-};
-
+// Listing interface
 export interface Listing {
-  _id: string;
-  url: string;
+  id?: string;
   title: string;
-  picture_url: string;
-  description: string;
-  price: string;
-  rating: string;
   location: string;
-  features: string[];
-  house_details: string[];
-  region?: string;
+  price: string;
+  rating?: number;  // Changed to number to match component interface
+  reviewCount?: number;
+  picture_url?: string;
+  description?: string;
   country?: string;
-  state?: string;
-  province?: string;
+  region?: string;
+  features?: string[];
+  isFeatured?: boolean;
+  isNew?: boolean;
+  hostName?: string;
 }
 
-export interface SearchResponse {
-  listings: Listing[];
-  totalCount: number;
-  pageCount: number;
-  currentPage: number;
-}
-
+// Search options interface
 export interface SearchOptions {
+  q?: string;  // Added 'q' property to match usage in component
   location?: string;
-  checkIn?: string;
-  checkOut?: string;
-  guests?: number;
-  priceMin?: number;
-  priceMax?: number;
-  propertyType?: string[];
-  amenities?: string[];
+  category?: string;
   page?: number;
-  pageSize?: number;
   limit?: number;
+  sortBy?: string;
+  minPrice?: number;
+  maxPrice?: number;
+}
+
+// Response interface for paginated results
+export interface ListingsResponse {
+  listings: Listing[];
+  total: number;
+  page: number;
+  pageCount: number;
 }
 
 @Injectable({
   providedIn: 'root'
 })
 export class ListingService {
-  private apiUrl = environment.apiUrl;
+  private apiUrl = 'api/listings';
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
-  // Fixed error handler that returns an Observable
-  private handleError(error: any) {
-    console.error('API error in listing service', error);
-    return throwError(() => error);
+  // Get list of featured or recommended listings
+  getFeaturedListings(): Observable<Listing[]> {
+    return this.http.get<Listing[]>(`${this.apiUrl}/featured`).pipe(
+      catchError(this.handleError<Listing[]>('getFeaturedListings', []))
+    );
   }
 
-  getListings(searchTerm?: string, limit?: number): Observable<any> {
-    let params = new HttpParams();
+  // Get a single listing by ID
+  getListing(id: string): Observable<Listing> {
+    return this.http.get<Listing>(`${this.apiUrl}/${id}`).pipe(
+      catchError(this.handleError<Listing>('getListing'))
+    );
+  }
 
+  // Get listings with optional search term and limit
+  getListings(searchTerm: string, limit?: number): Observable<Listing[]> {
+    let url = `${this.apiUrl}`;
     if (searchTerm) {
-      params = params.set('city', searchTerm);
+      url += `/search?q=${encodeURIComponent(searchTerm)}`;
     }
-
     if (limit) {
-      params = params.set('limit', limit.toString());
+      url += `${searchTerm ? '&' : '?'}limit=${limit}`;
     }
 
-    return this.http.get(`${this.apiUrl}/get-listings`, { params })
-      .pipe(
-        catchError((error) => this.handleError(error))
-      );
+    return this.http.get<Listing[]>(url).pipe(
+      catchError(this.handleError<Listing[]>('getListings', []))
+    );
   }
 
-  scrapeNorthAmerica(): Observable<any> {
-    return this.http.get(`${this.apiUrl}/scrape-north-america`)
-      .pipe(
-        catchError((error) => this.handleError(error))
-      );
+  // Search listings with various filters
+  searchListings(options: SearchOptions): Observable<ListingsResponse> {
+    // Convert options object to query parameters
+    const params = new URLSearchParams();
+
+    Object.entries(options).forEach(([key, value]) => {
+      if (value !== null && value !== undefined) {
+        params.append(key, value.toString());
+      }
+    });
+
+    return this.http.get<ListingsResponse>(`${this.apiUrl}/search?${params.toString()}`).pipe(
+      catchError(this.handleError<ListingsResponse>('searchListings', {
+        listings: [],
+        total: 0,
+        page: 1,
+        pageCount: 0
+      }))
+    );
   }
 
-  scrapeCity(city: string): Observable<any> {
-    let params = new HttpParams().set('city', city);
-
-    return this.http.get(`${this.apiUrl}/scrape-city-data`, { params })
-      .pipe(
-        catchError((error) => this.handleError(error))
-      );
+  // Get listings by category
+  getListingsByCategory(category: string): Observable<Listing[]> {
+    return this.http.get<Listing[]>(`${this.apiUrl}/category/${category}`).pipe(
+      catchError(this.handleError<Listing[]>('getListingsByCategory', []))
+    );
   }
 
-  searchListings(options: SearchOptions): Observable<SearchResponse> {
-    let params = new HttpParams();
-
-    // Add string parameters
-    if (options.location) params = params.set('location', options.location);
-    if (options.checkIn) params = params.set('checkIn', options.checkIn);
-    if (options.checkOut) params = params.set('checkOut', options.checkOut);
-
-    // Add number parameters
-    if (options.guests) params = params.set('guests', options.guests.toString());
-    if (options.priceMin) params = params.set('priceMin', options.priceMin.toString());
-    if (options.priceMax) params = params.set('priceMax', options.priceMax.toString());
-    if (options.page) params = params.set('page', options.page.toString());
-    if (options.pageSize) params = params.set('pageSize', options.pageSize.toString());
-    if (options.limit) params = params.set('limit', options.limit.toString());
-
-    // Handle array parameters
-    if (options.propertyType && options.propertyType.length > 0) {
-      options.propertyType.forEach((type: string) => {
-        params = params.append('propertyType', type);
-      });
-    }
-
-    if (options.amenities && options.amenities.length > 0) {
-      options.amenities.forEach((amenity: string) => {
-        params = params.append('amenities', amenity);
-      });
-    }
-
-    return this.http.get<SearchResponse>(`${this.apiUrl}/search`, { params })
-      .pipe(
-        catchError((error) => this.handleError(error))
-      );
+  // Get listings by location
+  getListingsByLocation(location: string): Observable<Listing[]> {
+    return this.http.get<Listing[]>(`${this.apiUrl}/location/${location}`).pipe(
+      catchError(this.handleError<Listing[]>('getListingsByLocation', []))
+    );
   }
 
-  getListingById(id: string): Observable<any> {
-    return this.http.get(`${this.apiUrl}/get-listing/${id}`)
-      .pipe(
-        catchError((error) => this.handleError(error))
-      );
+  // Error handling function
+  private handleError<T>(operation = 'operation', result?: T) {
+    return (error: any): Observable<T> => {
+      console.error(`${operation} failed: ${error.message}`);
+      // Return a safe result (empty array or object) to keep the application running
+      return of(result as T);
+    };
   }
 }

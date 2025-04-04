@@ -1,12 +1,22 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, of, catchError, throwError } from 'rxjs';
-import { AuthService } from './auth.service';
+import { HttpClient } from '@angular/common/http';
+import { Observable, of, throwError } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
-const environment = {
-  production: false,
-  apiUrl: 'http://localhost:5000'
-};
+export interface Itinerary {
+  id?: string;
+  name: string;
+  destination: string;
+  startDate: string;
+  endDate: string;
+  activities: Activity[];
+  accommodations: Accommodation[];
+  transportation: Transportation[];
+  totalBudget: number;
+  notes?: string;
+  // Add theme property to fix errors
+  theme?: string;
+}
 
 export interface Activity {
   id?: string;
@@ -17,6 +27,8 @@ export interface Activity {
   cost: number;
   notes: string;
   booked: boolean;
+  // Add type property to fix errors
+  type?: string;
 }
 
 export interface Accommodation {
@@ -28,11 +40,15 @@ export interface Accommodation {
   cost: number;
   confirmation: string;
   notes: string;
+  // Add type property to fix errors
+  type?: string;
+  // Add url property to fix errors
+  url?: string;
 }
 
 export interface Transportation {
   id?: string;
-  type: 'flight' | 'train' | 'car' | 'bus' | 'other';
+  type: string;
   from: string;
   to: string;
   departureDate: string;
@@ -45,479 +61,453 @@ export interface Transportation {
   notes: string;
 }
 
-export interface Itinerary {
-  id?: string;
-  userId?: string;
-  name: string;
-  destination: string;
-  startDate: string;
-  endDate: string;
-  activities: Activity[];
-  accommodations: Accommodation[];
-  transportation: Transportation[];
-  totalBudget: number;
-  notes: string;
-}
-
 @Injectable({
   providedIn: 'root'
 })
 export class TripService {
-  private apiUrl = `${environment.apiUrl}/trips`;
-  private mockMode = true; // Set to false when backend is ready
+  private apiUrl = 'http://localhost:5000/api/trips';
+  private mockTrips: Itinerary[] = [];
 
-  constructor(
-    private http: HttpClient,
-    private authService: AuthService
-  ) {}
+  constructor(private http: HttpClient) {
+    this.initializeMockTrips();
+  }
 
-  // Get all trips for current user
+  // Get all trips for the current user
   getUserTrips(): Observable<Itinerary[]> {
-    if (this.mockMode) {
-      return of(this.getMockItineraries());
-    }
+    // In a real app, this would make an HTTP request
+    // return this.http.get<Itinerary[]>(`${this.apiUrl}`);
 
-    const headers = this.authService.getAuthHeaders();
-
-    return this.http.get<Itinerary[]>(this.apiUrl, { headers })
-      .pipe(
-        catchError(error => {
-          console.error('Error fetching user trips:', error);
-          return throwError(() => 'Failed to load your trips. Please try again later.');
-        })
-      );
+    // Mock implementation
+    return of(this.mockTrips).pipe(
+      catchError(this.handleError<Itinerary[]>('getUserTrips', []))
+    );
   }
 
   // Get a specific trip by ID
-  getTripById(tripId: string): Observable<Itinerary> {
-    if (this.mockMode) {
-      const trip = this.getMockItineraries().find(t => t.id === tripId);
-      return trip
-        ? of(trip)
-        : throwError(() => 'Trip not found');
+  getTripById(id: string): Observable<Itinerary> {
+    // In a real app, this would make an HTTP request
+    // return this.http.get<Itinerary>(`${this.apiUrl}/${id}`);
+
+    // Mock implementation
+    const trip = this.mockTrips.find(t => t.id === id);
+
+    if (!trip) {
+      return throwError('Trip not found');
     }
 
-    const headers = this.authService.getAuthHeaders();
-
-    return this.http.get<Itinerary>(`${this.apiUrl}/${tripId}`, { headers })
-      .pipe(
-        catchError(error => {
-          console.error('Error fetching trip details:', error);
-          return throwError(() => 'Failed to load trip details. Please try again later.');
-        })
-      );
+    return of(trip).pipe(
+      catchError(this.handleError<Itinerary>('getTripById', {} as Itinerary))
+    );
   }
 
   // Create a new trip
   createTrip(trip: Itinerary): Observable<Itinerary> {
-    if (this.mockMode) {
-      const newTrip = {
-        ...trip,
-        id: Date.now().toString(),
-        userId: '1'
-      };
-      return of(newTrip);
-    }
+    // In a real app, this would make an HTTP request
+    // return this.http.post<Itinerary>(`${this.apiUrl}`, trip);
 
-    const headers = this.authService.getAuthHeaders();
+    // Mock implementation
+    const newTrip: Itinerary = {
+      ...trip,
+      id: Math.random().toString(36).substring(2, 11),
+      activities: [],
+      accommodations: [],
+      transportation: []
+    };
 
-    return this.http.post<Itinerary>(this.apiUrl, trip, { headers })
-      .pipe(
-        catchError(error => {
-          console.error('Error creating trip:', error);
-          return throwError(() => 'Failed to create trip. Please try again later.');
-        })
-      );
+    this.mockTrips.push(newTrip);
+
+    return of(newTrip).pipe(
+      catchError(this.handleError<Itinerary>('createTrip', {} as Itinerary))
+    );
   }
 
-  // Update an existing trip
-  updateTrip(tripId: string, trip: Itinerary): Observable<Itinerary> {
-    if (this.mockMode) {
-      return of({
-        ...trip,
-        id: tripId
-      });
+  // Update a trip
+  updateTrip(id: string, trip: Itinerary): Observable<Itinerary> {
+    // In a real app, this would make an HTTP request
+    // return this.http.put<Itinerary>(`${this.apiUrl}/${id}`, trip);
+
+    // Mock implementation
+    const index = this.mockTrips.findIndex(t => t.id === id);
+
+    if (index === -1) {
+      return throwError('Trip not found');
     }
 
-    const headers = this.authService.getAuthHeaders();
+    this.mockTrips[index] = {
+      ...this.mockTrips[index],
+      ...trip,
+      id: id // Ensure ID doesn't change
+    };
 
-    return this.http.put<Itinerary>(`${this.apiUrl}/${tripId}`, trip, { headers })
-      .pipe(
-        catchError(error => {
-          console.error('Error updating trip:', error);
-          return throwError(() => 'Failed to update trip. Please try again later.');
-        })
-      );
+    return of(this.mockTrips[index]).pipe(
+      catchError(this.handleError<Itinerary>('updateTrip', {} as Itinerary))
+    );
   }
 
   // Delete a trip
-  deleteTrip(tripId: string): Observable<any> {
-    if (this.mockMode) {
-      return of({ success: true });
+  deleteTrip(id: string): Observable<boolean> {
+    // In a real app, this would make an HTTP request
+    // return this.http.delete<boolean>(`${this.apiUrl}/${id}`);
+
+    // Mock implementation
+    const index = this.mockTrips.findIndex(t => t.id === id);
+
+    if (index === -1) {
+      return throwError('Trip not found');
     }
 
-    const headers = this.authService.getAuthHeaders();
+    this.mockTrips.splice(index, 1);
 
-    return this.http.delete(`${this.apiUrl}/${tripId}`, { headers })
-      .pipe(
-        catchError(error => {
-          console.error('Error deleting trip:', error);
-          return throwError(() => 'Failed to delete trip. Please try again later.');
-        })
-      );
+    return of(true).pipe(
+      catchError(this.handleError<boolean>('deleteTrip', false))
+    );
   }
 
-  // Add an activity to a trip
+  // ACTIVITY MANAGEMENT
   addActivity(tripId: string, activity: Activity): Observable<Activity> {
-    if (this.mockMode) {
-      return of({
-        ...activity,
-        id: Date.now().toString()
-      });
+    // In a real app, this would make an HTTP request
+    // return this.http.post<Activity>(`${this.apiUrl}/${tripId}/activities`, activity);
+
+    // Mock implementation
+    const trip = this.mockTrips.find(t => t.id === tripId);
+
+    if (!trip) {
+      return throwError('Trip not found');
     }
 
-    const headers = this.authService.getAuthHeaders();
+    const newActivity: Activity = {
+      ...activity,
+      id: Math.random().toString(36).substring(2, 11)
+    };
 
-    return this.http.post<Activity>(`${this.apiUrl}/${tripId}/activities`, activity, { headers })
-      .pipe(
-        catchError(error => {
-          console.error('Error adding activity:', error);
-          return throwError(() => 'Failed to add activity. Please try again later.');
-        })
-      );
+    trip.activities.push(newActivity);
+
+    return of(newActivity).pipe(
+      catchError(this.handleError<Activity>('addActivity', {} as Activity))
+    );
   }
 
-  // Update an activity
   updateActivity(tripId: string, activityId: string, activity: Activity): Observable<Activity> {
-    if (this.mockMode) {
-      return of({
-        ...activity,
-        id: activityId
-      });
+    // In a real app, this would make an HTTP request
+    // return this.http.put<Activity>(`${this.apiUrl}/${tripId}/activities/${activityId}`, activity);
+
+    // Mock implementation
+    const trip = this.mockTrips.find(t => t.id === tripId);
+
+    if (!trip) {
+      return throwError('Trip not found');
     }
 
-    const headers = this.authService.getAuthHeaders();
+    const activityIndex = trip.activities.findIndex(a => a.id === activityId);
 
-    return this.http.put<Activity>(`${this.apiUrl}/${tripId}/activities/${activityId}`, activity, { headers })
-      .pipe(
-        catchError(error => {
-          console.error('Error updating activity:', error);
-          return throwError(() => 'Failed to update activity. Please try again later.');
-        })
-      );
-  }
-
-  // Delete an activity
-  deleteActivity(tripId: string, activityId: string): Observable<any> {
-    if (this.mockMode) {
-      return of({ success: true });
+    if (activityIndex === -1) {
+      return throwError('Activity not found');
     }
 
-    const headers = this.authService.getAuthHeaders();
+    const updatedActivity: Activity = {
+      ...activity,
+      id: activityId
+    };
 
-    return this.http.delete(`${this.apiUrl}/${tripId}/activities/${activityId}`, { headers })
-      .pipe(
-        catchError(error => {
-          console.error('Error deleting activity:', error);
-          return throwError(() => 'Failed to delete activity. Please try again later.');
-        })
-      );
+    trip.activities[activityIndex] = updatedActivity;
+
+    return of(updatedActivity).pipe(
+      catchError(this.handleError<Activity>('updateActivity', {} as Activity))
+    );
   }
 
-  // Add accommodation to a trip
+  deleteActivity(tripId: string, activityId: string): Observable<boolean> {
+    // In a real app, this would make an HTTP request
+    // return this.http.delete<boolean>(`${this.apiUrl}/${tripId}/activities/${activityId}`);
+
+    // Mock implementation
+    const trip = this.mockTrips.find(t => t.id === tripId);
+
+    if (!trip) {
+      return throwError('Trip not found');
+    }
+
+    const activityIndex = trip.activities.findIndex(a => a.id === activityId);
+
+    if (activityIndex === -1) {
+      return throwError('Activity not found');
+    }
+
+    trip.activities.splice(activityIndex, 1);
+
+    return of(true).pipe(
+      catchError(this.handleError<boolean>('deleteActivity', false))
+    );
+  }
+
+  // ACCOMMODATION MANAGEMENT
   addAccommodation(tripId: string, accommodation: Accommodation): Observable<Accommodation> {
-    if (this.mockMode) {
-      return of({
-        ...accommodation,
-        id: Date.now().toString()
-      });
+    // In a real app, this would make an HTTP request
+    // return this.http.post<Accommodation>(`${this.apiUrl}/${tripId}/accommodations`, accommodation);
+
+    // Mock implementation
+    const trip = this.mockTrips.find(t => t.id === tripId);
+
+    if (!trip) {
+      return throwError('Trip not found');
     }
 
-    const headers = this.authService.getAuthHeaders();
+    const newAccommodation: Accommodation = {
+      ...accommodation,
+      id: Math.random().toString(36).substring(2, 11)
+    };
 
-    return this.http.post<Accommodation>(`${this.apiUrl}/${tripId}/accommodations`, accommodation, { headers })
-      .pipe(
-        catchError(error => {
-          console.error('Error adding accommodation:', error);
-          return throwError(() => 'Failed to add accommodation. Please try again later.');
-        })
-      );
+    trip.accommodations.push(newAccommodation);
+
+    return of(newAccommodation).pipe(
+      catchError(this.handleError<Accommodation>('addAccommodation', {} as Accommodation))
+    );
   }
 
-  // Update accommodation
   updateAccommodation(tripId: string, accommodationId: string, accommodation: Accommodation): Observable<Accommodation> {
-    if (this.mockMode) {
-      return of({
-        ...accommodation,
-        id: accommodationId
-      });
+    // In a real app, this would make an HTTP request
+    // return this.http.put<Accommodation>(`${this.apiUrl}/${tripId}/accommodations/${accommodationId}`, accommodation);
+
+    // Mock implementation
+    const trip = this.mockTrips.find(t => t.id === tripId);
+
+    if (!trip) {
+      return throwError('Trip not found');
     }
 
-    const headers = this.authService.getAuthHeaders();
+    const accommodationIndex = trip.accommodations.findIndex(a => a.id === accommodationId);
 
-    return this.http.put<Accommodation>(
-      `${this.apiUrl}/${tripId}/accommodations/${accommodationId}`,
-      accommodation,
-      { headers }
-    ).pipe(
-      catchError(error => {
-        console.error('Error updating accommodation:', error);
-        return throwError(() => 'Failed to update accommodation. Please try again later.');
-      })
+    if (accommodationIndex === -1) {
+      return throwError('Accommodation not found');
+    }
+
+    const updatedAccommodation: Accommodation = {
+      ...accommodation,
+      id: accommodationId
+    };
+
+    trip.accommodations[accommodationIndex] = updatedAccommodation;
+
+    return of(updatedAccommodation).pipe(
+      catchError(this.handleError<Accommodation>('updateAccommodation', {} as Accommodation))
     );
   }
 
-  // Delete accommodation
-  deleteAccommodation(tripId: string, accommodationId: string): Observable<any> {
-    if (this.mockMode) {
-      return of({ success: true });
+  deleteAccommodation(tripId: string, accommodationId: string): Observable<boolean> {
+    // In a real app, this would make an HTTP request
+    // return this.http.delete<boolean>(`${this.apiUrl}/${tripId}/accommodations/${accommodationId}`);
+
+    // Mock implementation
+    const trip = this.mockTrips.find(t => t.id === tripId);
+
+    if (!trip) {
+      return throwError('Trip not found');
     }
 
-    const headers = this.authService.getAuthHeaders();
+    const accommodationIndex = trip.accommodations.findIndex(a => a.id === accommodationId);
 
-    return this.http.delete(`${this.apiUrl}/${tripId}/accommodations/${accommodationId}`, { headers })
-      .pipe(
-        catchError(error => {
-          console.error('Error deleting accommodation:', error);
-          return throwError(() => 'Failed to delete accommodation. Please try again later.');
-        })
-      );
+    if (accommodationIndex === -1) {
+      return throwError('Accommodation not found');
+    }
+
+    trip.accommodations.splice(accommodationIndex, 1);
+
+    return of(true).pipe(
+      catchError(this.handleError<boolean>('deleteAccommodation', false))
+    );
   }
 
-  // Add transportation to a trip
+  // TRANSPORTATION MANAGEMENT
   addTransportation(tripId: string, transportation: Transportation): Observable<Transportation> {
-    if (this.mockMode) {
-      return of({
-        ...transportation,
-        id: Date.now().toString()
-      });
+    // In a real app, this would make an HTTP request
+    // return this.http.post<Transportation>(`${this.apiUrl}/${tripId}/transportation`, transportation);
+
+    // Mock implementation
+    const trip = this.mockTrips.find(t => t.id === tripId);
+
+    if (!trip) {
+      return throwError('Trip not found');
     }
 
-    const headers = this.authService.getAuthHeaders();
+    const newTransportation: Transportation = {
+      ...transportation,
+      id: Math.random().toString(36).substring(2, 11)
+    };
 
-    return this.http.post<Transportation>(`${this.apiUrl}/${tripId}/transportation`, transportation, { headers })
-      .pipe(
-        catchError(error => {
-          console.error('Error adding transportation:', error);
-          return throwError(() => 'Failed to add transportation. Please try again later.');
-        })
-      );
-  }
+    trip.transportation.push(newTransportation);
 
-  // Update transportation
-  updateTransportation(
-    tripId: string,
-    transportationId: string,
-    transportation: Transportation
-  ): Observable<Transportation> {
-    if (this.mockMode) {
-      return of({
-        ...transportation,
-        id: transportationId
-      });
-    }
-
-    const headers = this.authService.getAuthHeaders();
-
-    return this.http.put<Transportation>(
-      `${this.apiUrl}/${tripId}/transportation/${transportationId}`,
-      transportation,
-      { headers }
-    ).pipe(
-      catchError(error => {
-        console.error('Error updating transportation:', error);
-        return throwError(() => 'Failed to update transportation. Please try again later.');
-      })
+    return of(newTransportation).pipe(
+      catchError(this.handleError<Transportation>('addTransportation', {} as Transportation))
     );
   }
 
-  // Delete transportation
-  deleteTransportation(tripId: string, transportationId: string): Observable<any> {
-    if (this.mockMode) {
-      return of({ success: true });
+  updateTransportation(tripId: string, transportationId: string, transportation: Transportation): Observable<Transportation> {
+    // In a real app, this would make an HTTP request
+    // return this.http.put<Transportation>(`${this.apiUrl}/${tripId}/transportation/${transportationId}`, transportation);
+
+    // Mock implementation
+    const trip = this.mockTrips.find(t => t.id === tripId);
+
+    if (!trip) {
+      return throwError('Trip not found');
     }
 
-    const headers = this.authService.getAuthHeaders();
+    const transportationIndex = trip.transportation.findIndex(t => t.id === transportationId);
 
-    return this.http.delete(`${this.apiUrl}/${tripId}/transportation/${transportationId}`, { headers })
-      .pipe(
-        catchError(error => {
-          console.error('Error deleting transportation:', error);
-          return throwError(() => 'Failed to delete transportation. Please try again later.');
-        })
-      );
+    if (transportationIndex === -1) {
+      return throwError('Transportation not found');
+    }
+
+    const updatedTransportation: Transportation = {
+      ...transportation,
+      id: transportationId
+    };
+
+    trip.transportation[transportationIndex] = updatedTransportation;
+
+    return of(updatedTransportation).pipe(
+      catchError(this.handleError<Transportation>('updateTransportation', {} as Transportation))
+    );
   }
 
-  // Mock data for testing without backend
-  private getMockItineraries(): Itinerary[] {
-    return [
+  deleteTransportation(tripId: string, transportationId: string): Observable<boolean> {
+    // In a real app, this would make an HTTP request
+    // return this.http.delete<boolean>(`${this.apiUrl}/${tripId}/transportation/${transportationId}`);
+
+    // Mock implementation
+    const trip = this.mockTrips.find(t => t.id === tripId);
+
+    if (!trip) {
+      return throwError('Trip not found');
+    }
+
+    const transportationIndex = trip.transportation.findIndex(t => t.id === transportationId);
+
+    if (transportationIndex === -1) {
+      return throwError('Transportation not found');
+    }
+
+    trip.transportation.splice(transportationIndex, 1);
+
+    return of(true).pipe(
+      catchError(this.handleError<boolean>('deleteTransportation', false))
+    );
+  }
+
+  // Generic error handler
+  private handleError<T>(operation = 'operation', result?: T) {
+    return (error: any): Observable<T> => {
+      console.error(`${operation} failed:`, error);
+      // Let the app keep running by returning an empty result
+      return of(result as T);
+    };
+  }
+
+  // Initialize mock trips
+  private initializeMockTrips() {
+    this.mockTrips = [
       {
         id: '1',
-        userId: '1',
-        name: 'Summer in Europe',
-        destination: 'Europe (Multiple Countries)',
-        startDate: '2025-06-15',
-        endDate: '2025-06-28',
+        name: 'Summer in Italy',
+        destination: 'Rome, Florence, Venice',
+        startDate: '2025-06-10',
+        endDate: '2025-06-24',
         activities: [
           {
             id: 'a1',
-            name: 'Eiffel Tower Visit',
-            date: '2025-06-16',
+            name: 'Colosseum Tour',
+            date: '2025-06-11',
             time: '10:00',
-            location: 'Paris, France',
-            cost: 25,
-            notes: 'Book tickets in advance to avoid long queues',
-            booked: true
+            location: 'Rome, Italy',
+            cost: 45,
+            notes: 'Meet guide at south entrance',
+            booked: true,
+            type: 'cultural'
           },
           {
             id: 'a2',
-            name: 'Vatican Museum Tour',
-            date: '2025-06-20',
-            time: '09:30',
-            location: 'Vatican City, Rome',
-            cost: 45,
-            notes: 'Guided tour, meeting point at museum entrance',
-            booked: true
+            name: 'Vatican Museums',
+            date: '2025-06-12',
+            time: '09:00',
+            location: 'Vatican City',
+            cost: 35,
+            notes: 'Skip the line tickets',
+            booked: true,
+            type: 'cultural'
           }
         ],
         accommodations: [
           {
-            id: 'acc1',
-            name: 'Hotel Montmartre',
-            checkIn: '2025-06-15',
-            checkOut: '2025-06-18',
-            location: 'Paris, France',
-            cost: 450,
-            confirmation: 'HM123456',
-            notes: 'Breakfast included, metro station nearby'
+            id: 'ac1',
+            name: 'Hotel Roma',
+            checkIn: '2025-06-10',
+            checkOut: '2025-06-15',
+            location: 'Rome, Italy',
+            cost: 650,
+            confirmation: 'HR-123456',
+            notes: 'Breakfast included',
+            type: 'hotel',
+            url: 'https://example.com/hotel-roma'
           },
           {
-            id: 'acc2',
-            name: 'Grand Italia Hotel',
-            checkIn: '2025-06-18',
-            checkOut: '2025-06-22',
-            location: 'Rome, Italy',
+            id: 'ac2',
+            name: 'Florence Apartment',
+            checkIn: '2025-06-15',
+            checkOut: '2025-06-20',
+            location: 'Florence, Italy',
             cost: 580,
-            confirmation: 'GI789012',
-            notes: 'City center location, walking distance to Colosseum'
+            confirmation: 'FL-789012',
+            notes: 'Key pickup at agency next door',
+            type: 'apartment',
+            url: 'https://example.com/florence-apt'
           }
         ],
         transportation: [
           {
             id: 't1',
             type: 'flight',
-            from: 'New York JFK',
-            to: 'Paris CDG',
-            departureDate: '2025-06-15',
+            from: 'JFK Airport',
+            to: 'Rome Fiumicino Airport',
+            departureDate: '2025-06-10',
             departureTime: '18:30',
-            arrivalDate: '2025-06-16',
-            arrivalTime: '08:15',
-            carrier: 'Air France',
-            confirmation: 'AF456789',
+            arrivalDate: '2025-06-11',
+            arrivalTime: '08:45',
+            carrier: 'Alitalia',
+            confirmation: 'AL-345678',
             cost: 950,
-            notes: 'Terminal 1, Economy Plus'
+            notes: 'Economy Plus'
           },
           {
             id: 't2',
             type: 'train',
-            from: 'Paris Gare de Lyon',
-            to: 'Rome Termini',
-            departureDate: '2025-06-18',
-            departureTime: '10:00',
-            arrivalDate: '2025-06-18',
-            arrivalTime: '18:30',
-            carrier: 'EuroRail',
-            confirmation: 'ER123456',
-            cost: 175,
-            notes: 'First class, seat reservation included'
+            from: 'Rome',
+            to: 'Florence',
+            departureDate: '2025-06-15',
+            departureTime: '10:15',
+            arrivalDate: '2025-06-15',
+            arrivalTime: '11:45',
+            carrier: 'Trenitalia',
+            confirmation: 'TI-901234',
+            cost: 65,
+            notes: 'First class'
           }
         ],
-        totalBudget: 3000,
-        notes: 'First family trip to Europe. Focus on historical sites and local cuisine.'
+        totalBudget: 3500,
+        notes: 'Family vacation, focus on history and food',
+        theme: 'cultural'
       },
       {
         id: '2',
-        userId: '1',
-        name: 'Asian Adventure',
-        destination: 'Japan & Thailand',
-        startDate: '2025-09-10',
-        endDate: '2025-09-24',
-        activities: [
-          {
-            id: 'a3',
-            name: 'Tokyo Tower Visit',
-            date: '2025-09-12',
-            time: '14:00',
-            location: 'Tokyo, Japan',
-            cost: 30,
-            notes: 'Go during sunset for the best views',
-            booked: true
-          },
-          {
-            id: 'a4',
-            name: 'Elephant Sanctuary Tour',
-            date: '2025-09-18',
-            time: '09:00',
-            location: 'Chiang Mai, Thailand',
-            cost: 60,
-            notes: 'Full day tour, includes lunch',
-            booked: true
-          }
-        ],
-        accommodations: [
-          {
-            id: 'acc3',
-            name: 'Shinjuku Capsule Hotel',
-            checkIn: '2025-09-10',
-            checkOut: '2025-09-15',
-            location: 'Tokyo, Japan',
-            cost: 500,
-            confirmation: 'SH567890',
-            notes: 'Central location, small rooms but great amenities'
-          },
-          {
-            id: 'acc4',
-            name: 'Riverside Resort',
-            checkIn: '2025-09-15',
-            checkOut: '2025-09-24',
-            location: 'Chiang Mai, Thailand',
-            cost: 700,
-            confirmation: 'RR123789',
-            notes: 'Pool access, free shuttle to night market'
-          }
-        ],
-        transportation: [
-          {
-            id: 't3',
-            type: 'flight',
-            from: 'San Francisco SFO',
-            to: 'Tokyo NRT',
-            departureDate: '2025-09-10',
-            departureTime: '13:45',
-            arrivalDate: '2025-09-11',
-            arrivalTime: '17:30',
-            carrier: 'JAL',
-            confirmation: 'JAL789012',
-            cost: 1200,
-            notes: 'Premium economy, extra legroom'
-          },
-          {
-            id: 't4',
-            type: 'flight',
-            from: 'Tokyo NRT',
-            to: 'Chiang Mai CNX',
-            departureDate: '2025-09-15',
-            departureTime: '09:30',
-            arrivalDate: '2025-09-15',
-            arrivalTime: '14:45',
-            carrier: 'Thai Airways',
-            confirmation: 'TA567123',
-            cost: 350,
-            notes: 'Economy class, 1 checked bag'
-          }
-        ],
-        totalBudget: 4500,
-        notes: 'First time in Asia, focus on cultural experiences and food tours'
+        name: 'Japan Cherry Blossom Tour',
+        destination: 'Tokyo, Kyoto, Osaka',
+        startDate: '2025-03-22',
+        endDate: '2025-04-05',
+        activities: [],
+        accommodations: [],
+        transportation: [],
+        totalBudget: 4200,
+        notes: 'Photography focus, want to see cherry blossoms',
+        theme: 'cultural'
       }
     ];
   }

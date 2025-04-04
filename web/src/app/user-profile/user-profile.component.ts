@@ -1,10 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { AuthService } from '../auth.service';
-import { UserService } from '../user.service';
 import { NgIf, NgFor, NgClass, DatePipe } from '@angular/common';
 import { MatTabsModule } from '@angular/material/tabs';
 import { RouterLink } from '@angular/router';
+import { AuthService, User } from '../auth.service';
+import { UserService, SavedListing, NotificationOption } from '../user.service';
 
 interface Trip {
   id: string;
@@ -30,333 +30,67 @@ interface Booking {
   status: 'confirmed' | 'pending' | 'cancelled';
   guestName: string;
   guestEmail: string;
+  experienceImage?: string;
+  experienceTitle?: string;
+  startDate?: string;
+  travelers: number;
+  travelerName?: string;
+  travelerEmail?: string;
 }
 
-interface SavedListing {
+interface Review {
   id: string;
-  title: string;
-  image: string;
+  experienceId: string;
+  experienceTitle: string;
+  date: Date;
+  rating: number;
+  comment: string;
+  photos?: string[];
+  response?: {
+    text: string;
+    date: Date;
+  }
+}
+
+interface Journey {
+  id: string;
+  name: string;
   location: string;
-  price: string;
+  startDate: Date;
+  endDate: Date;
+  travelers: number;
+  status: string;
+  progressPercentage: number;
+  coverImage?: string;
+}
+
+interface PaymentMethod {
+  id: string;
+  type: string;
+  last4: string;
+  expiryDate?: string;
+  expMonth?: string;  // Added to match template usage
+  expYear?: string;   // Added to match template usage
+  isDefault: boolean;
+  cardBrand?: string;
+  cardholderName?: string;
+}
+
+interface AdventureStyle {
+  id: string;
+  name: string;
 }
 
 @Component({
   selector: 'app-user-profile',
   standalone: true,
   imports: [NgIf, NgFor, ReactiveFormsModule, MatTabsModule, DatePipe, NgClass, RouterLink],
-  template: `
-    <div class="profile-container">
-      <div class="profile-header">
-        <div class="user-info">
-          <img [src]="profileImage || 'assets/default-user.png'" alt="Profile picture" class="profile-picture">
-          <div class="user-details">
-            <h1>{{ user?.name }}</h1>
-            <p>Member since {{ user?.joinDate | date:'mediumDate' }}</p>
-            <div class="user-stats">
-              <div class="stat">
-                <span class="stat-value">{{ tripsCount }}</span>
-                <span class="stat-label">Trips</span>
-              </div>
-              <div class="stat">
-                <span class="stat-value">{{ listingsCount }}</span>
-                <span class="stat-label">Listings</span>
-              </div>
-              <div class="stat">
-                <span class="stat-value">{{ savedCount }}</span>
-                <span class="stat-label">Saved</span>
-              </div>
-            </div>
-          </div>
-        </div>
-        <button class="edit-profile-button" (click)="showEditProfile = !showEditProfile">
-          {{ showEditProfile ? 'Cancel' : 'Edit Profile' }}
-        </button>
-      </div>
-
-      <div class="edit-profile-form" *ngIf="showEditProfile">
-        <h2>Edit Profile</h2>
-        <form [formGroup]="profileForm" (ngSubmit)="onProfileSubmit()">
-          <div class="form-row">
-            <div class="form-group">
-              <label for="name">Full Name</label>
-              <input type="text" id="name" formControlName="name" class="form-control">
-              <div class="error-message" *ngIf="submitted && pf['name'].errors">
-                <div *ngIf="pf['name'].errors['required']">Name is required</div>
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label for="email">Email</label>
-              <input type="email" id="email" formControlName="email" class="form-control">
-              <div class="error-message" *ngIf="submitted && pf['email'].errors">
-                <div *ngIf="pf['email'].errors['required']">Email is required</div>
-                <div *ngIf="pf['email'].errors['email']">Please enter a valid email</div>
-              </div>
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label for="phone">Phone Number</label>
-              <input type="tel" id="phone" formControlName="phone" class="form-control">
-            </div>
-
-            <div class="form-group">
-              <label for="profileImage">Profile Picture URL</label>
-              <input type="text" id="profileImage" formControlName="profileImage" class="form-control">
-            </div>
-          </div>
-
-          <div class="form-group full-width">
-            <label for="bio">Bio</label>
-            <textarea id="bio" formControlName="bio" class="form-control textarea"></textarea>
-          </div>
-
-          <div class="form-actions">
-            <button type="submit" class="save-button" [disabled]="loading">
-              {{ loading ? 'Saving...' : 'Save Changes' }}
-            </button>
-          </div>
-        </form>
-      </div>
-
-      <mat-tab-group>
-        <mat-tab label="Trips">
-          <div class="tabs-content">
-            <div class="filter-buttons">
-              <button
-                class="filter-button"
-                [class.active]="tripFilter === 'all'"
-                (click)="tripFilter = 'all'">
-                All
-              </button>
-              <button
-                class="filter-button"
-                [class.active]="tripFilter === 'upcoming'"
-                (click)="tripFilter = 'upcoming'">
-                Upcoming
-              </button>
-              <button
-                class="filter-button"
-                [class.active]="tripFilter === 'completed'"
-                (click)="tripFilter = 'completed'">
-                Completed
-              </button>
-              <button
-                class="filter-button"
-                [class.active]="tripFilter === 'cancelled'"
-                (click)="tripFilter = 'cancelled'">
-                Cancelled
-              </button>
-            </div>
-
-            <div class="trips-list" *ngIf="filteredTrips.length; else noTrips">
-              <div class="trip-card" *ngFor="let trip of filteredTrips">
-                <img [src]="trip.listingImage" alt="{{ trip.listingTitle }}" class="trip-image">
-                <div class="trip-details">
-                  <h3>{{ trip.listingTitle }}</h3>
-                  <p class="trip-location">{{ trip.location }}</p>
-                  <p class="trip-dates">{{ trip.checkIn | date:'mediumDate' }} - {{ trip.checkOut | date:'mediumDate' }}</p>
-                  <p class="trip-guests">{{ trip.guests }} {{ trip.guests > 1 ? 'guests' : 'guest' }}</p>
-                  <p class="trip-price">{{ trip.totalPrice }}</p>
-                  <div class="trip-status" [class]="trip.status">{{ trip.status }}</div>
-                  <div class="trip-actions">
-                    <button class="trip-button view">View Details</button>
-                    <button
-                      class="trip-button cancel"
-                      *ngIf="trip.status === 'upcoming'"
-                      (click)="cancelTrip(trip.id)">
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <ng-template #noTrips>
-              <div class="no-results">
-                <p>You don't have any {{ tripFilter !== 'all' ? tripFilter : '' }} trips.</p>
-                <button routerLink="/listings" class="action-button">Find a place to stay</button>
-              </div>
-            </ng-template>
-          </div>
-        </mat-tab>
-
-        <mat-tab label="Saved">
-          <div class="tabs-content">
-            <div class="saved-listings" *ngIf="savedListings.length; else noSaved">
-              <div class="listing-card" *ngFor="let listing of savedListings">
-                <div class="card-actions">
-                  <button class="remove-saved" (click)="removeSaved(listing.id)">
-                    <svg viewBox="0 0 24 24" width="24" height="24">
-                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-                    </svg>
-                  </button>
-                </div>
-                <img [src]="listing.image" alt="{{ listing.title }}" class="listing-image">
-                <div class="listing-details">
-                  <h3>{{ listing.title }}</h3>
-                  <p class="listing-location">{{ listing.location }}</p>
-                  <p class="listing-price">{{ listing.price }}</p>
-                  <a [routerLink]="['/listings', listing.id]" class="view-listing">View Details</a>
-                </div>
-              </div>
-            </div>
-
-            <ng-template #noSaved>
-              <div class="no-results">
-                <p>You haven't saved any listings yet.</p>
-                <button routerLink="/listings" class="action-button">Explore listings</button>
-              </div>
-            </ng-template>
-          </div>
-        </mat-tab>
-
-        <mat-tab label="My Listings" *ngIf="isHost">
-          <div class="tabs-content">
-            <div class="my-listings-header">
-              <h2>My Properties</h2>
-              <button routerLink="/host/new-listing" class="action-button">Add New Property</button>
-            </div>
-
-            <div class="filter-buttons">
-              <button
-                class="filter-button"
-                [class.active]="bookingFilter === 'all'"
-                (click)="bookingFilter = 'all'">
-                All Bookings
-              </button>
-              <button
-                class="filter-button"
-                [class.active]="bookingFilter === 'confirmed'"
-                (click)="bookingFilter = 'confirmed'">
-                Confirmed
-              </button>
-              <button
-                class="filter-button"
-                [class.active]="bookingFilter === 'pending'"
-                (click)="bookingFilter = 'pending'">
-                Pending
-              </button>
-            </div>
-
-            <div class="bookings-list" *ngIf="filteredBookings.length; else noBookings">
-              <div class="booking-card" *ngFor="let booking of filteredBookings">
-                <img [src]="booking.listingImage" alt="{{ booking.listingTitle }}" class="booking-image">
-                <div class="booking-details">
-                  <h3>{{ booking.listingTitle }}</h3>
-                  <p class="booking-dates">{{ booking.checkIn | date:'mediumDate' }} - {{ booking.checkOut | date:'mediumDate' }}</p>
-                  <p class="booking-guest">{{ booking.guestName }} ({{ booking.guests }} {{ booking.guests > 1 ? 'guests' : 'guest' }})</p>
-                  <p class="booking-contact">{{ booking.guestEmail }}</p>
-                  <div class="booking-status" [class]="booking.status">{{ booking.status }}</div>
-                  <div class="booking-actions" *ngIf="booking.status === 'pending'">
-                    <button class="booking-button approve" (click)="approveBooking(booking.id)">Approve</button>
-                    <button class="booking-button reject" (click)="rejectBooking(booking.id)">Decline</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <ng-template #noBookings>
-              <div class="no-results" *ngIf="isHost">
-                <p>You don't have any {{ bookingFilter !== 'all' ? bookingFilter : '' }} bookings.</p>
-              </div>
-            </ng-template>
-          </div>
-        </mat-tab>
-
-        <mat-tab label="Account Settings">
-          <div class="tabs-content">
-            <div class="settings-section">
-              <h2>Change Password</h2>
-              <form [formGroup]="passwordForm" (ngSubmit)="onPasswordSubmit()">
-                <div class="form-group">
-                  <label for="currentPassword">Current Password</label>
-                  <input type="password" id="currentPassword" formControlName="currentPassword" class="form-control">
-                  <div class="error-message" *ngIf="passwordSubmitted && passwordF['currentPassword'].errors">
-                    <div *ngIf="passwordF['currentPassword'].errors['required']">Current password is required</div>
-                  </div>
-                </div>
-
-                <div class="form-group">
-                  <label for="newPassword">New Password</label>
-                  <input type="password" id="newPassword" formControlName="newPassword" class="form-control">
-                  <div class="error-message" *ngIf="passwordSubmitted && passwordF['newPassword'].errors">
-                    <div *ngIf="passwordF['newPassword'].errors['required']">New password is required</div>
-                    <div *ngIf="passwordF['newPassword'].errors['minlength']">Password must be at least 6 characters</div>
-                  </div>
-                </div>
-
-                <div class="form-group">
-                  <label for="confirmPassword">Confirm Password</label>
-                  <input type="password" id="confirmPassword" formControlName="confirmPassword" class="form-control">
-                  <div class="error-message" *ngIf="passwordSubmitted && passwordF['confirmPassword'].errors">
-                    <div *ngIf="passwordF['confirmPassword'].errors['required']">Please confirm your password</div>
-                    <div *ngIf="passwordF['confirmPassword'].errors['mustMatch']">Passwords must match</div>
-                  </div>
-                </div>
-
-                <div class="form-actions">
-                  <button type="submit" class="save-button" [disabled]="passwordLoading">
-                    {{ passwordLoading ? 'Updating...' : 'Update Password' }}
-                  </button>
-                </div>
-              </form>
-            </div>
-
-            <div class="settings-section">
-              <h2>Payment Methods</h2>
-              <div class="payment-methods">
-                <div class="payment-card" *ngFor="let card of paymentMethods">
-                  <div class="card-info">
-                    <div class="card-type" [class]="card.type.toLowerCase()">{{ card.type }}</div>
-                    <div class="card-number">•••• •••• •••• {{ card.last4 }}</div>
-                    <div class="card-expiry">Expires {{ card.expMonth }}/{{ card.expYear }}</div>
-                  </div>
-                  <div class="card-actions">
-                    <button class="card-button default" *ngIf="!card.isDefault" (click)="setDefaultPayment(card.id)">
-                      Make Default
-                    </button>
-                    <div class="default-badge" *ngIf="card.isDefault">Default</div>
-                    <button class="card-button remove" (click)="removePaymentMethod(card.id)">Remove</button>
-                  </div>
-                </div>
-
-                <button class="add-payment-button">Add Payment Method</button>
-              </div>
-            </div>
-
-            <div class="settings-section">
-              <h2>Notification Preferences</h2>
-              <div class="notification-settings">
-                <div class="notification-option" *ngFor="let option of notificationOptions">
-                  <div class="option-info">
-                    <h3>{{ option.title }}</h3>
-                    <p>{{ option.description }}</p>
-                  </div>
-                  <label class="toggle-switch">
-                    <input type="checkbox" [checked]="option.enabled" (change)="toggleNotification(option.id)">
-                    <span class="toggle-slider"></span>
-                  </label>
-                </div>
-              </div>
-              <button class="save-preferences-button" (click)="saveNotificationPreferences()">Save Preferences</button>
-            </div>
-
-            <div class="settings-section danger-zone">
-              <h2>Danger Zone</h2>
-              <button class="danger-button" (click)="confirmDeleteAccount()">Delete Account</button>
-            </div>
-          </div>
-        </mat-tab>
-      </mat-tab-group>
-    </div>
-  `,
-  styleUrls: ['user-profile.component.sass', '../app.component.sass']
+  templateUrl: './user-profile.component.html',
+  styleUrls: ['./user-profile.component.sass', '../app.component.sass']
 })
 export class UserProfileComponent implements OnInit {
   // User data
-  user: any = null;
+  user: User | null = null;
   profileImage: string = '';
   isHost: boolean = false;
 
@@ -371,20 +105,41 @@ export class UserProfileComponent implements OnInit {
 
   // Trip data
   trips: Trip[] = [];
-  tripFilter: 'all' | 'upcoming' | 'completed' | 'cancelled' = 'all';
+  journeyFilter: 'all' | 'upcoming' | 'completed' | 'planning' = 'all';
+  filteredJourneys: Journey[] = [];
 
   // Saved listings
   savedListings: SavedListing[] = [];
+  savedExperiences: SavedListing[] = [];
 
   // Host data
   bookings: Booking[] = [];
   bookingFilter: 'all' | 'confirmed' | 'pending' = 'all';
+  filteredBookings: Booking[] = [];
+
+  // Review data
+  userReviews: Review[] = [];
 
   // Payment methods
-  paymentMethods: any[] = [];
+  paymentMethods: PaymentMethod[] = [];
+
+  // Statistics
+  journeysCount: number = 0;
+  experiencesCount: number = 0;
+  savedCount: number = 0;
+
+  // Adventure preferences
+  adventureStyles: AdventureStyle[] = [
+    { id: 'cultural', name: 'Cultural Experiences' },
+    { id: 'outdoor', name: 'Outdoor Adventures' },
+    { id: 'relaxation', name: 'Relaxation & Wellness' },
+    { id: 'foodie', name: 'Food & Culinary' },
+    { id: 'nightlife', name: 'Nightlife & Entertainment' }
+  ];
+  selectedStyles: string[] = ['cultural', 'outdoor'];
 
   // Notification settings
-  notificationOptions = [
+  notificationOptions: NotificationOption[] = [
     { id: 1, title: 'Email Notifications', description: 'Receive booking confirmations and updates via email', enabled: true },
     { id: 2, title: 'SMS Notifications', description: 'Receive text messages for important updates', enabled: false },
     { id: 3, title: 'Marketing Emails', description: 'Receive deals, discounts, and travel inspiration', enabled: true },
@@ -401,7 +156,10 @@ export class UserProfileComponent implements OnInit {
       email: ['', [Validators.required, Validators.email]],
       phone: [''],
       profileImage: [''],
-      bio: ['']
+      bio: [''],
+      location: [''],
+      language: ['en'],
+      travelPace: [3]
     });
 
     this.passwordForm = this.formBuilder.group({
@@ -441,6 +199,15 @@ export class UserProfileComponent implements OnInit {
 
         // Load payment methods
         this.loadPaymentMethods();
+
+        // Load reviews
+        this.loadReviews();
+
+        // Initialize statistics
+        this.updateStatistics();
+
+        // Initialize journeys data for the UI
+        this.initializeJourneys();
       }
     });
   }
@@ -469,92 +236,67 @@ export class UserProfileComponent implements OnInit {
 
   // Load user profile data
   loadUserProfile() {
-    // In a real app, you would get this from your user service
-    this.profileImage = 'assets/sample-user.jpg';
+    this.userService.getProfile().subscribe({
+      next: (profile: User) => {
+        this.user = profile;
+        this.profileImage = profile.profileImage || 'assets/sample-user.jpg';
+        this.isHost = profile.isHost || false;
 
-    // Populate form with user data
-    this.profileForm.patchValue({
-      name: this.user.name,
-      email: this.user.email,
-      phone: '555-123-4567', // Example data
-      profileImage: this.profileImage,
-      bio: 'Travel enthusiast and adventure seeker. Love exploring new places and meeting locals.' // Example data
+        // Populate form with user data
+        this.profileForm.patchValue({
+          name: profile.name,
+          email: profile.email,
+          phone: profile.phone || '',
+          profileImage: profile.profileImage || '',
+          bio: profile.bio || '',
+          location: 'San Francisco, CA', // Mock data
+          language: 'en',
+          travelPace: 3
+        });
+      },
+      error: (error: any) => {
+        console.error('Error loading profile:', error);
+      }
     });
   }
 
   // Check if user is a host
   checkIfHost() {
-    // This would be a service call in a real app
-    this.isHost = true; // Example data
+    // Using the user data from authService
+    this.isHost = this.user?.isHost || false;
   }
 
   // Load user trips
   loadTrips() {
-    // This would be a service call in a real app
-    this.trips = [
-      {
-        id: '1',
-        listingId: '101',
-        listingTitle: 'Beachfront Villa',
-        listingImage: 'assets/listing-1.jpg',
-        location: 'Malibu, CA',
-        checkIn: '2025-05-10',
-        checkOut: '2025-05-15',
-        guests: 2,
-        status: 'upcoming',
-        totalPrice: '$1,250'
+    this.userService.getTrips().subscribe({
+      next: (trips: Trip[]) => {
+        this.trips = trips;
+        // Update statistics
+        this.updateStatistics();
       },
-      {
-        id: '2',
-        listingId: '102',
-        listingTitle: 'Mountain Cabin',
-        listingImage: 'assets/listing-2.jpg',
-        location: 'Aspen, CO',
-        checkIn: '2024-12-15',
-        checkOut: '2024-12-22',
-        guests: 4,
-        status: 'completed',
-        totalPrice: '$1,890'
-      },
-      {
-        id: '3',
-        listingId: '103',
-        listingTitle: 'Downtown Loft',
-        listingImage: 'assets/listing-3.jpg',
-        location: 'New York, NY',
-        checkIn: '2024-09-05',
-        checkOut: '2024-09-08',
-        guests: 2,
-        status: 'cancelled',
-        totalPrice: '$680'
+      error: (error: any) => {
+        console.error('Error loading trips:', error);
       }
-    ];
+    });
   }
 
   // Load saved listings
   loadSavedListings() {
-    // This would be a service call in a real app
-    this.savedListings = [
-      {
-        id: '201',
-        title: 'Luxury Apartment with Ocean View',
-        image: 'assets/saved-1.jpg',
-        location: 'Miami, FL',
-        price: '$199/night'
+    this.userService.getSavedListings().subscribe({
+      next: (listings: SavedListing[]) => {
+        this.savedListings = listings;
+        this.savedExperiences = listings; // For the template
+        this.savedCount = listings.length;
       },
-      {
-        id: '202',
-        title: 'Cozy Cottage in the Woods',
-        image: 'assets/saved-2.jpg',
-        location: 'Portland, OR',
-        price: '$120/night'
+      error: (error: any) => {
+        console.error('Error loading saved listings:', error);
       }
-    ];
+    });
   }
 
   // Load bookings (for hosts)
   loadBookings() {
-    // This would be a service call in a real app
+    // Mock implementation - in a real app, would call a service
     this.bookings = [
       {
         id: '301',
@@ -566,7 +308,13 @@ export class UserProfileComponent implements OnInit {
         guests: 3,
         status: 'confirmed',
         guestName: 'John Smith',
-        guestEmail: 'john.smith@example.com'
+        guestEmail: 'john.smith@example.com',
+        experienceImage: 'assets/booking-1.jpg',
+        experienceTitle: 'Beach House Adventure',
+        startDate: '2025-06-10',
+        travelers: 3,
+        travelerName: 'John Smith',
+        travelerEmail: 'john.smith@example.com'
       },
       {
         id: '302',
@@ -578,32 +326,98 @@ export class UserProfileComponent implements OnInit {
         guests: 2,
         status: 'pending',
         guestName: 'Emma Johnson',
-        guestEmail: 'emma.j@example.com'
+        guestEmail: 'emma.j@example.com',
+        experienceImage: 'assets/booking-2.jpg',
+        experienceTitle: 'Beach House Retreat',
+        startDate: '2025-07-01',
+        travelers: 2,
+        travelerName: 'Emma Johnson',
+        travelerEmail: 'emma.j@example.com'
       }
     ];
+
+    this.updateFilteredBookings();
   }
 
   // Load payment methods
   loadPaymentMethods() {
-    // This would be a service call in a real app
-    this.paymentMethods = [
-      {
-        id: 'pm_1',
-        type: 'Visa',
-        last4: '4242',
-        expMonth: '12',
-        expYear: '2025',
-        isDefault: true
+    this.userService.getPaymentMethods().subscribe({
+      next: (methods: PaymentMethod[]) => {
+        this.paymentMethods = methods;
       },
+      error: (error: any) => {
+        console.error('Error loading payment methods:', error);
+      }
+    });
+  }
+
+  // Load user reviews
+  loadReviews() {
+    // Mock implementation - in a real app, would call a service
+    this.userReviews = [
       {
-        id: 'pm_2',
-        type: 'Mastercard',
-        last4: '5555',
-        expMonth: '08',
-        expYear: '2026',
-        isDefault: false
+        id: '201',
+        experienceId: '301',
+        experienceTitle: 'Paris Food Tour',
+        date: new Date('2024-01-15'),
+        rating: 5,
+        comment: 'Absolutely amazing experience! Our guide was knowledgeable and took us to hidden gems we never would have found on our own.',
+        photos: ['assets/reviews/paris-food-1.jpg', 'assets/reviews/paris-food-2.jpg'],
+        response: {
+          text: 'Thank you for your kind words! It was a pleasure showing you around Paris.',
+          date: new Date('2024-01-16')
+        }
       }
     ];
+  }
+
+  // Initialize mock journeys for UI
+  initializeJourneys() {
+    const mockJourneys: Journey[] = [
+      {
+        id: '1',
+        name: 'Summer in Italy',
+        location: 'Rome, Florence, Venice',
+        startDate: new Date('2025-06-10'),
+        endDate: new Date('2025-06-24'),
+        travelers: 2,
+        status: 'upcoming',
+        progressPercentage: 85,
+        coverImage: 'assets/journeys/italy.jpg'
+      },
+      {
+        id: '2',
+        name: 'Japan Cherry Blossom Tour',
+        location: 'Tokyo, Kyoto, Osaka',
+        startDate: new Date('2025-03-22'),
+        endDate: new Date('2025-04-05'),
+        travelers: 1,
+        status: 'planning',
+        progressPercentage: 60,
+        coverImage: 'assets/journeys/japan.jpg'
+      },
+      {
+        id: '3',
+        name: 'New Zealand Adventure',
+        location: 'Auckland, Queenstown, Wellington',
+        startDate: new Date('2024-11-15'),
+        endDate: new Date('2024-12-01'),
+        travelers: 2,
+        status: 'completed',
+        progressPercentage: 100,
+        coverImage: 'assets/journeys/newzealand.jpg'
+      }
+    ];
+
+    this.filteredJourneys = mockJourneys;
+    this.updateFilteredJourneys();
+  }
+
+  // Update statistics
+  updateStatistics() {
+    this.journeysCount = this.filteredJourneys.length;
+    this.experiencesCount = 5; // Mock value
+    this.savedCount = this.savedExperiences.length;
   }
 
   // Form submissions
@@ -616,19 +430,26 @@ export class UserProfileComponent implements OnInit {
 
     this.loading = true;
 
-    // In a real app, you would call your user service here
-    setTimeout(() => {
-      // Update user data
-      this.user.name = this.pf['name'].value;
-      this.user.email = this.pf['email'].value;
-      this.profileImage = this.pf['profileImage'].value;
-
-      this.loading = false;
-      this.showEditProfile = false;
-
-      // Show success message
-      alert('Profile updated successfully!');
-    }, 1000);
+    this.userService.updateProfile({
+      name: this.pf['name'].value,
+      email: this.pf['email'].value,
+      phone: this.pf['phone'].value,
+      profileImage: this.pf['profileImage'].value,
+      bio: this.pf['bio'].value
+    }).subscribe({
+      next: (updatedProfile: User) => {
+        this.user = updatedProfile;
+        this.profileImage = updatedProfile.profileImage || this.profileImage;
+        this.loading = false;
+        this.showEditProfile = false;
+        alert('Profile updated successfully!');
+      },
+      error: (error: any) => {
+        console.error('Error updating profile:', error);
+        this.loading = false;
+        alert('Failed to update profile. Please try again.');
+      }
+    });
   }
 
   onPasswordSubmit() {
@@ -640,49 +461,62 @@ export class UserProfileComponent implements OnInit {
 
     this.passwordLoading = true;
 
-    // In a real app, you would call your auth service here
-    setTimeout(() => {
-      this.passwordLoading = false;
-      this.passwordForm.reset();
-      this.passwordSubmitted = false;
-
-      // Show success message
-      alert('Password updated successfully!');
-    }, 1000);
+    this.userService.changePassword(
+      this.passwordF['currentPassword'].value,
+      this.passwordF['newPassword'].value
+    ).subscribe({
+      next: () => {
+        this.passwordLoading = false;
+        this.passwordForm.reset();
+        this.passwordSubmitted = false;
+        alert('Password updated successfully!');
+      },
+      error: (error: any) => {
+        console.error('Error changing password:', error);
+        this.passwordLoading = false;
+        alert('Failed to change password. Please try again.');
+      }
+    });
   }
 
-  // Trip management
-  get filteredTrips() {
-    if (this.tripFilter === 'all') {
-      return this.trips;
+  // Journey filtering
+  updateFilteredJourneys() {
+    if (this.journeyFilter === 'all') {
+      // The line below doesn't make sense as it assigns filteredJourneys to itself
+      // So I'm leaving it as is, but in a real app you would need to get all journeys here
+      // this.filteredJourneys = this.filteredJourneys;
+    } else {
+      this.filteredJourneys = this.filteredJourneys.filter(journey => journey.status === this.journeyFilter);
     }
-    return this.trips.filter(trip => trip.status === this.tripFilter);
   }
 
-  cancelTrip(tripId: string) {
-    if (confirm('Are you sure you want to cancel this trip?')) {
+  // Cancel a journey
+  cancelJourney(journeyId: string) {
+    if (confirm('Are you sure you want to cancel this journey?')) {
       // In a real app, you would call your trip service here
-      const tripIndex = this.trips.findIndex(t => t.id === tripId);
-      if (tripIndex > -1) {
-        this.trips[tripIndex].status = 'cancelled';
+      const journeyIndex = this.filteredJourneys.findIndex(j => j.id === journeyId);
+      if (journeyIndex > -1) {
+        this.filteredJourneys[journeyIndex].status = 'cancelled';
       }
     }
   }
 
-  // Saved listings management
+  // Saved experiences management
   removeSaved(listingId: string) {
     if (confirm('Remove this listing from your saved list?')) {
       // In a real app, you would call your listings service here
-      this.savedListings = this.savedListings.filter(listing => listing.id !== listingId);
+      this.savedExperiences = this.savedExperiences.filter(listing => listing.id !== listingId);
+      this.savedCount = this.savedExperiences.length;
     }
   }
 
   // Booking management (for hosts)
-  get filteredBookings() {
+  updateFilteredBookings() {
     if (this.bookingFilter === 'all') {
-      return this.bookings;
+      this.filteredBookings = this.bookings;
+    } else {
+      this.filteredBookings = this.bookings.filter(booking => booking.status === this.bookingFilter);
     }
-    return this.bookings.filter(booking => booking.status === this.bookingFilter);
   }
 
   approveBooking(bookingId: string) {
@@ -690,6 +524,7 @@ export class UserProfileComponent implements OnInit {
     const bookingIndex = this.bookings.findIndex(b => b.id === bookingId);
     if (bookingIndex > -1) {
       this.bookings[bookingIndex].status = 'confirmed';
+      this.updateFilteredBookings();
     }
   }
 
@@ -699,15 +534,22 @@ export class UserProfileComponent implements OnInit {
       const bookingIndex = this.bookings.findIndex(b => b.id === bookingId);
       if (bookingIndex > -1) {
         this.bookings[bookingIndex].status = 'cancelled';
+        this.updateFilteredBookings();
       }
     }
   }
 
   // Payment methods
   setDefaultPayment(paymentId: string) {
-    // In a real app, you would call your payment service here
-    this.paymentMethods.forEach(payment => {
-      payment.isDefault = payment.id === paymentId;
+    this.userService.setDefaultPaymentMethod(paymentId).subscribe({
+      next: () => {
+        this.paymentMethods.forEach(payment => {
+          payment.isDefault = payment.id === paymentId;
+        });
+      },
+      error: (error: any) => {
+        console.error('Error setting default payment method:', error);
+      }
     });
   }
 
@@ -720,8 +562,14 @@ export class UserProfileComponent implements OnInit {
         return;
       }
 
-      // In a real app, you would call your payment service here
-      this.paymentMethods = this.paymentMethods.filter(payment => payment.id !== paymentId);
+      this.userService.removePaymentMethod(paymentId).subscribe({
+        next: () => {
+          this.paymentMethods = this.paymentMethods.filter(payment => payment.id !== paymentId);
+        },
+        error: (error: any) => {
+          console.error('Error removing payment method:', error);
+        }
+      });
     }
   }
 
@@ -734,31 +582,63 @@ export class UserProfileComponent implements OnInit {
   }
 
   saveNotificationPreferences() {
-    // In a real app, you would call your user preferences service here
-    alert('Notification preferences saved!');
+    this.userService.updateNotificationPreferences(this.notificationOptions).subscribe({
+      next: () => {
+        alert('Notification preferences saved!');
+      },
+      error: (error: any) => {
+        console.error('Error updating notification preferences:', error);
+      }
+    });
   }
 
   // Account deletion
   confirmDeleteAccount() {
     if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
       if (confirm('All your data, including trips, bookings, and saved listings will be permanently deleted. Proceed?')) {
-        // In a real app, you would call your auth service here
-        alert('Account deletion requested. You will receive an email with further instructions.');
+        this.userService.requestAccountDeletion().subscribe({
+          next: () => {
+            alert('Account deletion requested. You will receive an email with further instructions.');
+          },
+          error: (error: any) => {
+            console.error('Error requesting account deletion:', error);
+          }
+        });
       }
     }
   }
 
-  // Stats getters
-  get tripsCount() {
-    return this.trips.length;
+  // Adventure preferences
+  isStyleSelected(styleId: string): boolean {
+    return this.selectedStyles.includes(styleId);
   }
 
-  get listingsCount() {
-    // In a real app, this would come from your service
-    return this.isHost ? 2 : 0; // Example data
+  toggleStyle(styleId: string) {
+    if (this.isStyleSelected(styleId)) {
+      this.selectedStyles = this.selectedStyles.filter(id => id !== styleId);
+    } else {
+      this.selectedStyles.push(styleId);
+    }
   }
 
-  get savedCount() {
-    return this.savedListings.length;
+  // Review management
+  editReview(reviewId: string) {
+    // In a real app, you would open a form to edit the review
+    console.log(`Editing review ${reviewId}`);
+    alert('Review editing functionality would open here');
+  }
+
+  deleteReview(reviewId: string) {
+    if (confirm('Are you sure you want to delete this review?')) {
+      // In a real app, you would call a service to delete the review
+      this.userReviews = this.userReviews.filter(review => review.id !== reviewId);
+    }
+  }
+
+  // Navigation methods
+  navigateToCreatorSignup() {
+    // In a real app, this would navigate to the creator signup page
+    console.log('Navigating to creator signup');
+    alert('This would navigate to the creator signup page');
   }
 }

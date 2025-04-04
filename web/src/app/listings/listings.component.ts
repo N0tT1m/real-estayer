@@ -1,370 +1,409 @@
-import { Component, OnInit } from '@angular/core'
-import { ListingService } from '../listings.service'
-import { FormsModule } from "@angular/forms"
-import {NgIf, NgFor, KeyValuePipe, TitleCasePipe, NgClass, SlicePipe} from "@angular/common"
-import { HttpClientModule } from '@angular/common/http'
-import { Router, ActivatedRoute } from '@angular/router'
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { NgFor, NgIf, NgClass, SlicePipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
+import { ListingService, Listing as ServiceListing } from '../listings.service';
+import { UserService } from '../user.service';
 
-interface Listing {
-  url: string
-  title: string
-  picture_url: string
-  location: string
-  region: string
-  state: string
-  province: string
-  country: string
-  price: string
-  features: string[]
-  rating?: number
-}
-
-interface Filter {
-  name: string
-  options: string[]
-  selected: string[]
-  isCollapsed: boolean
-  icon?: string
+// Using the interface from ListingsComponent but ensuring compatibility with service
+export interface Listing extends ServiceListing {
+  id?: string;
+  title: string;
+  location: string;
+  price: string;
+  rating?: number;
+  reviewCount?: number;
+  picture_url?: string;
+  description?: string;
+  country?: string;
+  region?: string;
+  features?: string[];
+  isFeatured?: boolean;
+  isNew?: boolean;
+  hostName?: string;
 }
 
 @Component({
   selector: 'app-listings',
   standalone: true,
-  imports: [
-    NgIf,
-    NgFor,
-    NgClass,
-    KeyValuePipe,
-    TitleCasePipe,
-    FormsModule,
-    HttpClientModule,
-    SlicePipe
-  ],
-  providers: [ListingService],
+  imports: [NgFor, NgIf, NgClass, RouterLink, SlicePipe],
   templateUrl: 'listings.component.html',
-  styleUrls: ['listings.component.sass'],
+  styleUrls: ['listings.component.sass']
 })
 export class ListingsComponent implements OnInit {
-  allListings: Listing[] = []
-  filteredListings: Listing[] = []
-  searchTerm: string = ''
-  filters: Filter[] = []
-  hasSearched: boolean = false
-  isLoading: boolean = false
-  hasError: boolean = false
-  errorMessage: string = ''
-  currentPage: number = 1
-  itemsPerPage: number = 12
-  totalPages: number = 1
-  sortOption: string = 'recommended'
+  // Data storage
+  paginatedExperiences: Listing[] = [];
+  filteredExperiences: Listing[] = [];
+  savedExperiences: string[] = [];
 
-  readonly sortOptions = [
-    { value: 'recommended', label: 'Recommended' },
-    { value: 'price_asc', label: 'Price: Low to High' },
-    { value: 'price_desc', label: 'Price: High to Low' },
-    { value: 'rating_desc', label: 'Highest Rated' }
-  ]
+  // UI state
+  isLoading: boolean = false;
+  hasError: boolean = false;
+  errorMessage: string = '';
+  hasSearched: boolean = false;
+
+  // Search and filter state
+  searchTerm: string = '';
+  sortOption: string = 'recommended';
+
+  // Pagination
+  currentPage: number = 1;
+  itemsPerPage: number = 10;
+  totalPages: number = 1;
+
+  // Math for template
+  Math = Math; // Make Math available in the template
+
+  // Filtering options
+  filters = [
+    {
+      name: 'Adventure Type',
+      icon: 'tag',
+      isCollapsed: false,
+      options: ['Outdoor', 'Cultural', 'Culinary', 'Wellness', 'Nightlife', 'Family-friendly']
+    },
+    {
+      name: 'Experience Type',
+      icon: 'compass',
+      isCollapsed: true,
+      options: ['Classes', 'Tours', 'Day Trips', 'Multi-day', 'Activities', 'Venues']
+    },
+    {
+      name: 'Rating',
+      icon: 'star',
+      isCollapsed: true,
+      options: ['5 Stars', '4+ Stars', '3+ Stars']
+    },
+    {
+      name: 'Price Range',
+      icon: 'money',
+      isCollapsed: true,
+      options: ['Under $50', '$50 - $100', '$100 - $200', '$200+']
+    }
+  ];
+
+  activeFilters: {[category: string]: string[]} = {};
 
   constructor(
     private listingService: ListingService,
-    private router: Router,
-    private route: ActivatedRoute
+    private userService: UserService,
+    private route: ActivatedRoute,
+    private router: Router
   ) {}
 
-  ngOnInit() {
-    // Initialize filters with icons
-    this.filters = [
-      {
-        name: 'Features',
-        options: [],
-        selected: [],
-        isCollapsed: true,
-        icon: 'features'
-      },
-      {
-        name: 'Price Range',
-        options: ['$0-$50', '$51-$100', '$101-$200', '$201+'],
-        selected: [],
-        isCollapsed: true,
-        icon: 'price'
-      },
-      {
-        name: 'Location',
-        options: [],
-        selected: [],
-        isCollapsed: true,
-        icon: 'location'
-      }
-    ]
-
-    // Check for query params
+  ngOnInit(): void {
+    // Get query parameters
     this.route.queryParams.subscribe(params => {
-      if (params['search']) {
-        this.searchTerm = params['search']
-        this.getListings()
+      if (params['q']) {
+        this.searchTerm = params['q'];
+        this.hasSearched = true;
+        this.getExperiences();
       }
 
-      if (params['sort']) {
-        this.sortOption = params['sort']
+      if (params['category']) {
+        this.toggleFilter('Adventure Type', params['category']);
+        this.hasSearched = true;
+        this.getExperiences();
       }
 
-      if (params['page']) {
-        this.currentPage = +params['page']
+      if (params['location']) {
+        this.searchTerm = params['location'];
+        this.hasSearched = true;
+        this.getExperiences();
       }
-    })
+    });
+
+    // Load saved experiences
+    this.loadSavedExperiences();
   }
 
-  getListings() {
-    this.isLoading = true
-    this.hasError = false
+  // Fetch experiences from API
+  getExperiences(): void {
+    this.isLoading = true;
+    this.hasError = false;
 
-    this.listingService.getListings(this.searchTerm).subscribe({
-      next: (data: Listing[]) => {
-        this.allListings = data
-        this.updateFilterOptions()
-        this.sortListings()
-        this.filterListings()
-        this.hasSearched = true
-        this.isLoading = false
+    this.listingService.searchListings({
+      q: this.searchTerm,
+      page: this.currentPage,
+      limit: this.itemsPerPage
+    }).subscribe({
+      next: (response) => {
+        // Explicitly convert service listings to component listings
+        const convertedListings: Listing[] = (response.listings || []).map(listing => ({
+          ...listing,
+          rating: typeof listing.rating === 'string' ? parseFloat(listing.rating) : listing.rating
+        }));
 
-        // Update URL with search term
-        this.router.navigate([], {
-          relativeTo: this.route,
-          queryParams: { search: this.searchTerm },
-          queryParamsHandling: 'merge'
-        })
+        this.filteredExperiences = convertedListings;
+        this.totalPages = response.pageCount || 1;
+        this.applyFilters();
+        this.applySort();
+        this.updatePagination();
+        this.isLoading = false;
       },
-      error: error => {
-        console.error('Error fetching listings:', error)
-        this.hasSearched = true
-        this.isLoading = false
-        this.hasError = true
-        this.errorMessage = 'Failed to load listings. Please try again later.'
-        this.allListings = []
-        this.filteredListings = []
+      error: (error: any) => {
+        this.hasError = true;
+        this.errorMessage = 'Failed to load experiences. Please try again.';
+        this.isLoading = false;
+        console.error('Error fetching experiences:', error);
       }
-    })
+    });
   }
 
-  onSearch() {
-    this.currentPage = 1 // Reset to first page on new search
-    this.getListings()
+  // Load user's saved experiences
+  loadSavedExperiences(): void {
+    this.userService.getSavedListings().subscribe({
+      next: (saved) => {
+        this.savedExperiences = saved.map(item => item.id);
+      },
+      error: (error: any) => {
+        console.error('Error loading saved experiences:', error);
+      }
+    });
   }
 
-  updateFilterOptions() {
-    // Update Features filter options
-    const allFeatures = Array.from(new Set(this.allListings.flatMap(listing => listing.features)))
-    this.filters[0].options = allFeatures.sort()
-
-    // Update Location filter options
-    const allLocations = Array.from(new Set(this.allListings.map(listing => listing.location)))
-    this.filters[2].options = allLocations.sort()
+  // Check if an experience is saved
+  isSaved(id: string): boolean {
+    return this.savedExperiences.includes(id);
   }
 
-  sortListings() {
-    switch(this.sortOption) {
-      case 'price_asc':
-        this.allListings.sort((a, b) => {
-          const priceA = parseInt(a.price.replace(/\D/g,''))
-          const priceB = parseInt(b.price.replace(/\D/g,''))
-          return priceA - priceB
-        })
-        break
-      case 'price_desc':
-        this.allListings.sort((a, b) => {
-          const priceA = parseInt(a.price.replace(/\D/g,''))
-          const priceB = parseInt(b.price.replace(/\D/g,''))
-          return priceB - priceA
-        })
-        break
-      case 'rating_desc':
-        this.allListings.sort((a, b) => {
-          const ratingA = a.rating || 0
-          const ratingB = b.rating || 0
-          return ratingB - ratingA
-        })
-        break
-      case 'recommended':
+  // Toggle saved status for an experience
+  toggleSaved(id: string): void {
+    if (this.isSaved(id)) {
+      this.userService.unsaveExperience(id).subscribe({
+        next: () => {
+          this.savedExperiences = this.savedExperiences.filter(savedId => savedId !== id);
+        },
+        error: (error: any) => {
+          console.error('Error unsaving experience:', error);
+        }
+      });
+    } else {
+      this.userService.saveExperience(id).subscribe({
+        next: () => {
+          this.savedExperiences.push(id);
+        },
+        error: (error: any) => {
+          console.error('Error saving experience:', error);
+        }
+      });
+    }
+  }
+
+  // Search form submission
+  onSearch(): void {
+    this.currentPage = 1;
+    this.hasSearched = true;
+
+    // Update URL with search parameters
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { q: this.searchTerm },
+      queryParamsHandling: 'merge'
+    });
+
+    this.getExperiences();
+  }
+
+  // Sort options
+  onSortChange(): void {
+    this.applySort();
+  }
+
+  applySort(): void {
+    switch (this.sortOption) {
+      case 'price-low':
+        this.filteredExperiences.sort((a, b) => {
+          return this.extractPrice(a.price) - this.extractPrice(b.price);
+        });
+        break;
+      case 'price-high':
+        this.filteredExperiences.sort((a, b) => {
+          return this.extractPrice(b.price) - this.extractPrice(a.price);
+        });
+        break;
+      case 'rating':
+        this.filteredExperiences.sort((a, b) => {
+          const ratingA = a.rating || 0;
+          const ratingB = b.rating || 0;
+          return ratingB - ratingA;
+        });
+        break;
+      case 'newest':
+        // Assuming there's a createdAt property, or we could use the isNew flag
+        this.filteredExperiences.sort((a, b) => {
+          if (a.isNew && !b.isNew) return -1;
+          if (!a.isNew && b.isNew) return 1;
+          return 0;
+        });
+        break;
       default:
-        // Keep original ordering or implement recommendation logic
-        break
+        // 'recommended' - default sorting from API
+        break;
     }
+
+    this.updatePagination();
   }
 
-  onSortChange() {
-    this.sortListings()
-    this.filterListings()
-
-    // Update URL with sort option
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { sort: this.sortOption },
-      queryParamsHandling: 'merge'
-    })
+  // Helper to extract price as a number
+  private extractPrice(priceString: string): number {
+    const numericString = priceString?.replace(/[^0-9.]/g, '');
+    return numericString ? parseFloat(numericString) : 0;
   }
 
-  filterListings() {
-    this.filteredListings = this.allListings.filter(listing => {
-      // If searchTerm is not empty, filter by it
-      if (this.searchTerm.trim() !== '') {
-        const searchLower = this.searchTerm.toLowerCase()
-        const locationMatch =
-          listing.location.toLowerCase().includes(searchLower) ||
-          listing.region.toLowerCase().includes(searchLower) ||
-          listing.country.toLowerCase().includes(searchLower) ||
-          (listing.state && listing.state.toLowerCase().includes(searchLower)) ||
-          (listing.province && listing.province.toLowerCase().includes(searchLower))
+  // Filter management
+  toggleFilter(category: string, option: string): void {
+    if (!this.activeFilters[category]) {
+      this.activeFilters[category] = [];
+    }
 
-        if (!locationMatch) {
-          return false
-        }
+    const index = this.activeFilters[category].indexOf(option);
+    if (index === -1) {
+      this.activeFilters[category].push(option);
+    } else {
+      this.activeFilters[category].splice(index, 1);
+      if (this.activeFilters[category].length === 0) {
+        delete this.activeFilters[category];
       }
-
-      return this.filters.every(filter => {
-        if (filter.selected.length === 0) return true
-
-        switch(filter.name) {
-          case 'Features':
-            return filter.selected.every(feature =>
-              listing.features.includes(feature)
-            )
-          case 'Price Range':
-            const price = parseInt(listing.price.replace(/\D/g,''))
-            return filter.selected.some(range => {
-              const [min, max] = range.split('-').map(v =>
-                parseInt(v.replace('$', ''))
-              )
-              return price >= min && (max ? price <= max : true)
-            })
-          case 'Location':
-            return filter.selected.includes(listing.location)
-          default:
-            return true
-        }
-      })
-    })
-
-    this.updatePagination()
-  }
-
-  toggleFilter(filterName: string, option: string) {
-    const filter = this.filters.find(f => f.name === filterName)
-    if (filter) {
-      const index = filter.selected.indexOf(option)
-      if (index > -1) {
-        filter.selected.splice(index, 1)
-      } else {
-        filter.selected.push(option)
-      }
-      this.currentPage = 1 // Reset to first page when filters change
-      this.filterListings()
-    }
-  }
-
-  clearFilters() {
-    this.filters.forEach(filter => {
-      filter.selected = []
-    })
-    this.currentPage = 1
-    this.filterListings()
-  }
-
-  isFilterSelected(filterName: string, option: string): boolean {
-    const filter = this.filters.find(f => f.name === filterName)
-    return filter ? filter.selected.includes(option) : false
-  }
-
-  toggleCollapse(filter: Filter) {
-    filter.isCollapsed = !filter.isCollapsed
-  }
-
-  updatePagination() {
-    this.totalPages = Math.ceil(this.filteredListings.length / this.itemsPerPage)
-    // Ensure current page is valid
-    if (this.currentPage > this.totalPages) {
-      this.currentPage = Math.max(1, this.totalPages)
-    }
-  }
-
-  get paginatedListings() {
-    const startIndex = (this.currentPage - 1) * this.itemsPerPage
-    return this.filteredListings.slice(startIndex, startIndex + this.itemsPerPage)
-  }
-
-  nextPage() {
-    if (this.hasNextPage()) {
-      this.currentPage++
-      this.updatePageQueryParam()
-    }
-  }
-
-  prevPage() {
-    if (this.hasPreviousPage()) {
-      this.currentPage--
-      this.updatePageQueryParam()
-    }
-  }
-
-  goToPage(page: number) {
-    if (page >= 1 && page <= this.totalPages) {
-      this.currentPage = page
-      this.updatePageQueryParam()
-    }
-  }
-
-  updatePageQueryParam() {
-    // Update URL with page number
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { page: this.currentPage },
-      queryParamsHandling: 'merge'
-    })
-
-    // Scroll to top of results
-    const listingsElement = document.querySelector('.listings') as HTMLElement;
-    window.scrollTo({
-      top: listingsElement?.offsetTop - 100 || 0,
-      behavior: 'smooth'
-    })
-  }
-
-  hasNextPage(): boolean {
-    return this.currentPage < this.totalPages
-  }
-
-  hasPreviousPage(): boolean {
-    return this.currentPage > 1
-  }
-
-  getVisiblePages(): number[] {
-    const delta = 2
-    const range: number[] = []
-
-    let left = this.currentPage - delta
-    let right = this.currentPage + delta + 1
-
-    // Handle edge cases
-    if (left < 1) {
-      left = 1
-      right = Math.min(5, this.totalPages)
     }
 
-    if (right > this.totalPages) {
-      right = this.totalPages
-      left = Math.max(1, this.totalPages - 4)
-    }
+    this.applyFilters();
+  }
 
-    // Generate the range
-    for (let i = left; i < right; i++) {
-      range.push(i)
-    }
-
-    return range
+  isFilterSelected(category: string, option: string): boolean {
+    return this.activeFilters[category]?.includes(option) || false;
   }
 
   getActiveFiltersCount(): number {
-    return this.filters.reduce((count, filter) => count + filter.selected.length, 0)
+    return Object.values(this.activeFilters)
+      .reduce((count, options) => count + options.length, 0);
   }
 
-  protected readonly Math = Math;
+  clearFilters(): void {
+    this.activeFilters = {};
+    this.applyFilters();
+  }
+
+  applyFilters(): void {
+    // If no active filters, use all experiences
+    if (this.getActiveFiltersCount() === 0) {
+      // No need to re-filter, just update pagination
+      this.updatePagination();
+      return;
+    }
+
+    // Apply filters
+    // Note: In a real app, you might want to send these filters to the backend
+    // This is a simplified client-side filtering implementation
+    this.filteredExperiences = this.filteredExperiences.filter(experience => {
+      return this.matchesAllFilters(experience);
+    });
+
+    this.currentPage = 1;
+    this.updatePagination();
+  }
+
+  private matchesAllFilters(experience: Listing): boolean {
+    // Check if experience matches all active filter categories
+    for (const [category, options] of Object.entries(this.activeFilters)) {
+      if (options.length === 0) continue;
+
+      let categoryMatch = false;
+
+      switch (category) {
+        case 'Adventure Type':
+          // Check if any experience features match the selected adventure types
+          categoryMatch = options.some(option =>
+            experience.features?.some(feature =>
+              feature.toLowerCase().includes(option.toLowerCase())
+            )
+          );
+          break;
+
+        case 'Rating':
+          const rating = experience.rating || 0;
+          categoryMatch = options.some(option => {
+            if (option === '5 Stars') return rating >= 4.8;
+            if (option === '4+ Stars') return rating >= 4.0;
+            if (option === '3+ Stars') return rating >= 3.0;
+            return false;
+          });
+          break;
+
+        case 'Price Range':
+          const price = this.extractPrice(experience.price);
+          categoryMatch = options.some(option => {
+            if (option === 'Under $50') return price < 50;
+            if (option === '$50 - $100') return price >= 50 && price <= 100;
+            if (option === '$100 - $200') return price > 100 && price <= 200;
+            if (option === '$200+') return price > 200;
+            return false;
+          });
+          break;
+
+        default:
+          // No match for this category
+          categoryMatch = false;
+      }
+
+      // If the experience doesn't match this category, return false
+      if (!categoryMatch) return false;
+    }
+
+    // If we get here, the experience matches all filter categories
+    return true;
+  }
+
+  // Toggle filter dropdown collapse
+  toggleCollapse(filter: any): void {
+    filter.isCollapsed = !filter.isCollapsed;
+  }
+
+  // Pagination methods
+  updatePagination(): void {
+    const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+    const endIndex = startIndex + this.itemsPerPage;
+    this.paginatedExperiences = this.filteredExperiences.slice(startIndex, endIndex);
+    this.totalPages = Math.ceil(this.filteredExperiences.length / this.itemsPerPage);
+  }
+
+  prevPage(): void {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+      this.updatePagination();
+    }
+  }
+
+  nextPage(): void {
+    if (this.currentPage < this.totalPages) {
+      this.currentPage++;
+      this.updatePagination();
+    }
+  }
+
+  goToPage(page: number): void {
+    this.currentPage = page;
+    this.updatePagination();
+  }
+
+  hasPreviousPage(): boolean {
+    return this.currentPage > 1;
+  }
+
+  hasNextPage(): boolean {
+    return this.currentPage < this.totalPages;
+  }
+
+  getVisiblePages(): number[] {
+    const visiblePageCount = 5;
+    let startPage = Math.max(1, this.currentPage - Math.floor(visiblePageCount / 2));
+    let endPage = Math.min(this.totalPages, startPage + visiblePageCount - 1);
+
+    // Adjust start page if needed
+    if (endPage - startPage + 1 < visiblePageCount) {
+      startPage = Math.max(1, endPage - visiblePageCount + 1);
+    }
+
+    return Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage + i);
+  }
 }

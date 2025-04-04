@@ -1,0 +1,853 @@
+// src/app/home/home.component.sass
+
+// Variables
+$primary-color: #1a936f
+$secondary-color: #ff7e3d
+$accent-color: #3d5a80
+$text-color: #353535
+$light-text: #6c757d
+$dark-bg: #2b2b2b
+$light-bg: #f5f7fa
+$border-color: #e0e0e0
+$shadow: 0 4px 24px rgba(0, 0, 0, 0.08)
+$radius: 10px
+$transition: all 0.3s ease
+$max-width: 1200px
+
+// Global Styles
+.home-container
+  width: 100%
+  max-width: 100%
+  overflow-x: hidden
+  font-family: 'Montserrat', sans-serif
+  color: $text-color
+
+section
+  padding: 80px 0
+  width: 100%
+
+h1, h2, h3, h4
+  font-weight: 700
+  margin-bottom: 1rem
+
+h1
+  font-size: 3.2rem
+  margin-bottom: 1.5rem
+
+h2
+  font-size: 2.4rem
+  text-align: center
+  margin-bottom: 2.5rem
+
+h3
+  font-size: 1.4rem
+
+button
+  cursor: pointer
+  border: none
+  border-radius: $radius
+  transition: $transition
+
+  &:hover
+    transform: translateY(-2px)
+
+// Hero Section
+.hero-section
+  position: relative
+  height: 800px
+  background-image: url('/assets/images/adventure-bg.jpg')
+  background-size: cover
+  background-position: center
+  color: white
+  display: flex
+  align-items: center
+  justify-content: center
+  text-align: center
+  padding: 0
+
+  .hero-overlay
+    position: absolute
+    top: 0
+    left: 0
+    width: 100%
+    height: 100%
+    background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(26, 147, 111, 0.6))
+    z-index: 1
+
+  .hero-content
+    position: relative
+    z-index: 2
+    max-width: $max-width
+    width: 90%
+    padding: 2rem
+
+    h1
+      font-size: 4.2rem
+      margin-bottom: 1rem
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3)
+      letter-spacing: -0.5px
+
+    p
+      font-size: 1.6rem
+      margin-bottom: 3rem
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3)
+
+// Search Container
+.search-container
+  background: white
+  border-radius: $radius
+  padding: 1.8rem
+  box-shadow: $shadow
+  max-width: 900px
+  margin: 0 auto
+
+  form
+    display: flex
+    flex-direction: column
+    gap: 1rem
+
+    @media (min-width: 768px)
+      flex-direction: row
+      align-items: flex-end
+
+  .search-fields
+    display: flex
+    flex-direction: column
+    gap: 1rem
+    flex: 1
+
+    @media (min-width: 768px)
+      flex-direction: row
+
+  .search-field
+    flex: 1
+    display: flex
+    flex-direction: column
+    gap: 0.5rem
+
+    label
+      color: $accent-color
+      font-weight: 600
+      font-size: 0.9rem
+      text-transform: uppercase
+      letter-spacing: 0.5px
+
+    input, select
+      padding: 0.9rem 1.2rem
+      border: 1px solid $border-color
+      border-radius: $radius
+      font-size: 1rem
+      background-color: $light-bg
+
+      &:focus
+        outline: none
+        border-color: $primary-color
+        box-shadow: 0 0 0 3px rgba($primary-color, 0.1)
+
+  .search-button
+    background: $primary-color
+    color: white
+    padding: 0.9rem 2.2rem
+    font-size: 1rem
+    font-weight: 600
+    display: flex
+    align-items: center
+    justify-content: center
+    gap: 0.5rem
+    min-width: 140px
+    letter-spacing: 0.5px
+    text-transform: uppercase
+
+    svg
+      fill: currentColor
+
+    &:hover
+      background: darken($primary-color, 5%)
+      box-shadow: 0 5px 15px rgba($primary-color, 0.3)
+
+// Services Tabs
+.services-tabs
+  background: white
+  padding: 0
+  position: relative
+  margin-top: -30px
+  z-index: 10
+
+  .tabs-container
+    display: flex
+    flex-wrap: wrap
+    max-width: 900px
+    margin: 0 auto
+    background: white
+    border-radius: $radius
+    box-shadow: $shadow
+    overflow: hidden
+
+  .tab
+    flex: 1
+    min-width: 150px
+    padding: 1.5rem 1rem
+    display: flex
+    flex-direction: column
+    align-items: center
+    justify-content: center
+    gap: 0.7rem
+    cursor: pointer
+    transition: $transition
+    border-bottom: 3px solid transparent
+
+    svg
+      width: 28px
+      height: 28px
+      fill: $light-text
+
+    span
+      font-weight: 600
+      font-size: 0.9rem
+      color: $light-text
+      text-transform: uppercase
+      letter-spacing: 0.5px
+
+    &.active
+      background-color: rgba($primary-color, 0.05)
+      border-bottom: 3px solid $primary-color
+
+      svg
+        fill: $primary-color
+
+      span
+        color: $primary-color
+
+    &:hover:not(.active)
+      background-color: rgba($light-bg, 0.7)
+
+// Featured Destinations
+.featured-destinations
+  background: white
+
+  p
+    text-align: center
+    max-width: 700px
+    margin: 0 auto 3rem
+    color: $light-text
+    font-size: 1.1rem
+    line-height: 1.6
+
+  .destinations-grid
+    display: grid
+    grid-template-columns: repeat(1, 1fr)
+    gap: 2.5rem
+    max-width: $max-width
+    margin: 0 auto
+    padding: 0 1rem
+
+    @media (min-width: 576px)
+      grid-template-columns: repeat(2, 1fr)
+
+    @media (min-width: 992px)
+      grid-template-columns: repeat(3, 1fr)
+
+  .destination-card
+    position: relative
+    border-radius: $radius
+    overflow: hidden
+    height: 350px
+    box-shadow: $shadow
+    cursor: pointer
+
+    .destination-image
+      width: 100%
+      height: 100%
+
+      img
+        width: 100%
+        height: 100%
+        object-fit: cover
+        transition: transform 0.6s ease
+
+    .destination-overlay
+      position: absolute
+      bottom: 0
+      left: 0
+      width: 100%
+      padding: 2.5rem 1.8rem
+      background: linear-gradient(to top, rgba(0, 0, 0, 0.85), transparent)
+      color: white
+
+      h3
+        margin: 0 0 0.5rem
+        font-size: 1.7rem
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3)
+
+      p
+        margin: 0
+        font-size: 1rem
+        opacity: 0.9
+
+    &:hover
+      img
+        transform: scale(1.08)
+
+// How It Works
+.how-it-works
+  background: $light-bg
+
+  .steps-container
+    display: grid
+    grid-template-columns: repeat(1, 1fr)
+    gap: 3.5rem
+    max-width: $max-width
+    margin: 0 auto
+    padding: 0 1rem
+
+    @media (min-width: 768px)
+      grid-template-columns: repeat(3, 1fr)
+
+  .step
+    text-align: center
+
+    .step-icon
+      width: 110px
+      height: 110px
+      background: white
+      border-radius: 50%
+      display: flex
+      align-items: center
+      justify-content: center
+      margin: 0 auto 1.8rem
+      box-shadow: $shadow
+      transition: $transition
+
+      svg
+        fill: $primary-color
+        width: 50px
+        height: 50px
+
+    &:hover .step-icon
+      transform: translateY(-8px) scale(1.05)
+      box-shadow: 0 12px 25px rgba(0, 0, 0, 0.1)
+
+    h3
+      margin-bottom: 1rem
+      font-size: 1.5rem
+      color: $accent-color
+
+    p
+      color: $light-text
+      line-height: 1.7
+      font-size: 1rem
+      max-width: 300px
+      margin: 0 auto
+
+// Featured Listings
+.featured-listings
+  p
+    text-align: center
+    max-width: 700px
+    margin: 0 auto 3rem
+    color: $light-text
+    font-size: 1.1rem
+    line-height: 1.6
+
+  .listings-grid
+    display: grid
+    grid-template-columns: repeat(1, 1fr)
+    gap: 2.5rem
+    max-width: $max-width
+    margin: 0 auto
+    padding: 0 1rem
+
+    @media (min-width: 576px)
+      grid-template-columns: repeat(2, 1fr)
+
+    @media (min-width: 992px)
+      grid-template-columns: repeat(3, 1fr)
+
+  .listing-card
+    background: white
+    border-radius: $radius
+    overflow: hidden
+    box-shadow: $shadow
+    transition: $transition
+
+    &:hover
+      transform: translateY(-8px)
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.12)
+
+      .listing-image img
+        transform: scale(1.05)
+
+    .listing-image
+      position: relative
+      height: 240px
+      overflow: hidden
+
+      img
+        width: 100%
+        height: 100%
+        object-fit: cover
+        transition: transform 0.5s ease
+
+      .listing-rating
+        position: absolute
+        top: 1rem
+        right: 1rem
+        background: rgba(0, 0, 0, 0.6)
+        color: white
+        padding: 0.4rem 0.7rem
+        border-radius: 4px
+        display: flex
+        align-items: center
+        gap: 0.3rem
+        font-weight: 600
+        font-size: 0.9rem
+
+        .rating-icon
+          color: #ffd700
+
+      .listing-badge
+        position: absolute
+        top: 1rem
+        left: 1rem
+        background: $primary-color
+        color: white
+        padding: 0.4rem 0.8rem
+        border-radius: 4px
+        font-weight: 600
+        font-size: 0.75rem
+        text-transform: uppercase
+        letter-spacing: 0.5px
+
+    .listing-details
+      padding: 1.8rem
+
+      h3
+        font-size: 1.3rem
+        margin-bottom: 0.9rem
+        line-height: 1.4
+
+      .listing-location
+        color: $light-text
+        margin-bottom: 1rem
+        font-size: 0.95rem
+        display: flex
+        align-items: center
+        gap: 0.5rem
+
+        &:before
+          content: ""
+          display: inline-block
+          width: 14px
+          height: 14px
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%236c757d'%3E%3Cpath d='M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z'/%3E%3C/svg%3E")
+          background-repeat: no-repeat
+          background-size: contain
+
+      .listing-price
+        font-weight: 700
+        color: $accent-color
+        margin-bottom: 1.5rem
+        font-size: 1.2rem
+
+      .view-details-button
+        background: $primary-color
+        color: white
+        padding: 0.9rem 1.5rem
+        width: 100%
+        border-radius: $radius
+        font-weight: 600
+        text-transform: uppercase
+        letter-spacing: 0.5px
+        font-size: 0.9rem
+        transition: $transition
+
+        &:hover
+          background: darken($primary-color, 8%)
+          box-shadow: 0 5px 15px rgba($primary-color, 0.3)
+
+  .loading-indicator
+    text-align: center
+    padding: 3rem 0
+
+    .spinner
+      width: 60px
+      height: 60px
+      border: 5px solid $light-bg
+      border-top: 5px solid $primary-color
+      border-radius: 50%
+      margin: 0 auto 1.5rem
+      animation: spin 1s linear infinite
+
+    p
+      color: $light-text
+      font-size: 1.1rem
+
+@keyframes spin
+  0%
+    transform: rotate(0deg)
+  100%
+    transform: rotate(360deg)
+
+// Travel Planning
+.travel-planning
+  background: $light-bg
+  display: flex
+  flex-direction: column
+  max-width: $max-width
+  margin: 0 auto
+  padding: 0 1rem
+  align-items: center
+  position: relative
+  border-radius: $radius
+  overflow: hidden
+
+  @media (min-width: 992px)
+    flex-direction: row
+    align-items: stretch
+
+  .planning-content
+    padding: 3rem 2rem
+    width: 100%
+
+    @media (min-width: 992px)
+      width: 50%
+      padding: 4rem 3rem
+
+    h2
+      text-align: left
+      margin-bottom: 1.5rem
+      font-size: 2.2rem
+
+    p
+      margin-bottom: 2rem
+      color: $light-text
+      font-size: 1.1rem
+      line-height: 1.6
+
+    .planning-features
+      list-style: none
+      padding: 0
+      margin: 0 0 2.5rem
+
+      li
+        display: flex
+        align-items: flex-start
+        gap: 1rem
+        margin-bottom: 1rem
+
+        svg
+          min-width: 24px
+          height: 24px
+          fill: $primary-color
+          margin-top: 0.2rem
+
+        span
+          font-size: 1rem
+          line-height: 1.6
+
+    .planning-button
+      background: $secondary-color
+      color: white
+      padding: 1rem 2rem
+      border-radius: $radius
+      font-weight: 600
+      font-size: 1rem
+      display: inline-block
+      text-transform: uppercase
+      letter-spacing: 0.5px
+      transition: $transition
+
+      &:hover
+        background: darken($secondary-color, 8%)
+        box-shadow: 0 5px 15px rgba($secondary-color, 0.3)
+
+  .planning-image
+    width: 100%
+    height: 350px
+
+    @media (min-width: 992px)
+      width: 50%
+      height: auto
+
+    img
+      width: 100%
+      height: 100%
+      object-fit: cover
+
+// Top Experiences (Adventure Styles)
+.top-experiences
+  background: white
+
+  .categories-grid
+    display: grid
+    grid-template-columns: repeat(1, 1fr)
+    gap: 2rem
+    max-width: $max-width
+    margin: 0 auto
+    padding: 0 1rem
+
+    @media (min-width: 576px)
+      grid-template-columns: repeat(2, 1fr)
+
+    @media (min-width: 992px)
+      grid-template-columns: repeat(4, 1fr)
+
+  .category-card
+    position: relative
+    border-radius: $radius
+    overflow: hidden
+    box-shadow: $shadow
+    height: 280px
+    cursor: pointer
+    transition: $transition
+
+    &:hover
+      transform: translateY(-8px)
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15)
+
+      .category-image img
+        transform: scale(1.1)
+
+    .category-image
+      height: 200px
+      overflow: hidden
+
+      img
+        width: 100%
+        height: 100%
+        object-fit: cover
+        transition: transform 0.5s ease
+
+    h3
+      padding: 1.2rem 1.5rem 0.4rem
+      margin: 0
+      font-size: 1.3rem
+      color: $accent-color
+
+    p
+      padding: 0 1.5rem 1.2rem
+      margin: 0
+      color: $light-text
+      font-size: 0.95rem
+
+// App Download
+.app-download
+  display: flex
+  flex-direction: column
+  align-items: center
+  max-width: $max-width
+  margin: 0 auto
+  padding: 0 1rem
+
+  @media (min-width: 992px)
+    flex-direction: row
+    align-items: center
+    justify-content: space-between
+
+  .app-content
+    text-align: center
+    margin-bottom: 3rem
+
+    @media (min-width: 992px)
+      text-align: left
+      width: 45%
+      margin-bottom: 0
+
+    h2
+      margin-bottom: 1.2rem
+      text-align: center
+      font-size: 2.2rem
+
+      @media (min-width: 992px)
+        text-align: left
+
+    p
+      color: $light-text
+      margin-bottom: 2.5rem
+      font-size: 1.1rem
+      line-height: 1.6
+
+    .app-buttons
+      display: flex
+      gap: 1.2rem
+      justify-content: center
+
+      @media (min-width: 992px)
+        justify-content: flex-start
+
+      .app-button
+        display: flex
+        align-items: center
+        gap: 0.8rem
+        background: $dark-bg
+        color: white
+        padding: 0.8rem 1.5rem
+        border-radius: $radius
+        text-decoration: none
+        transition: $transition
+        font-weight: 500
+
+        &:hover
+          transform: translateY(-5px)
+          box-shadow: $shadow
+          background: $accent-color
+
+        img
+          width: 24px
+          height: 24px
+
+  .app-image
+    width: 100%
+    max-width: 400px
+
+    @media (min-width: 992px)
+      width: 45%
+
+    img
+      width: 100%
+      height: auto
+      display: block
+      border-radius: $radius
+      box-shadow: $shadow
+
+// Newsletter
+.newsletter
+  background: linear-gradient(135deg, $primary-color, $accent-color)
+  color: white
+
+  .newsletter-content
+    max-width: $max-width
+    margin: 0 auto
+    padding: 0 1rem
+    text-align: center
+
+    h2
+      color: white
+      margin-bottom: 1.2rem
+      font-size: 2.2rem
+
+    p
+      color: rgba(white, 0.9)
+      margin-bottom: 2.5rem
+      font-size: 1.1rem
+      max-width: 700px
+      margin-left: auto
+      margin-right: auto
+      line-height: 1.6
+
+    .newsletter-form
+      display: flex
+      flex-direction: column
+      gap: 1rem
+      max-width: 550px
+      margin: 0 auto
+
+      @media (min-width: 576px)
+        flex-direction: row
+
+      input
+        flex: 1
+        padding: 1.1rem 1.5rem
+        border-radius: $radius
+        border: none
+        font-size: 1rem
+        background: rgba(white, 0.9)
+
+        &:focus
+          outline: none
+          background: white
+          box-shadow: 0 0 0 3px rgba(white, 0.2)
+
+      button
+        background: $secondary-color
+        color: white
+        padding: 1.1rem 2.2rem
+        border-radius: $radius
+        font-size: 1rem
+        font-weight: 600
+        text-transform: uppercase
+        letter-spacing: 0.5px
+
+        &:hover
+          background: darken($secondary-color, 8%)
+          transform: translateY(-2px)
+          box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15)
+
+// Footer
+footer
+  background: $dark-bg
+  color: white
+  padding: 5rem 0 2rem
+
+  .container
+    max-width: $max-width
+    margin: 0 auto
+    padding: 0 1rem
+
+  .footer-nav
+    display: grid
+    grid-template-columns: repeat(1, 1fr)
+    gap: 3rem
+    margin-bottom: 4rem
+
+    @media (min-width: 576px)
+      grid-template-columns: repeat(2, 1fr)
+
+    @media (min-width: 992px)
+      grid-template-columns: repeat(4, 1fr)
+      gap: 2rem
+
+  .footer-section
+    h2
+      color: white
+      font-size: 1.2rem
+      margin-bottom: 1.5rem
+      text-transform: uppercase
+      letter-spacing: 1px
+
+    ul
+      list-style: none
+      padding: 0
+      margin: 0
+
+      li
+        margin-bottom: 0.8rem
+
+        a
+          color: rgba(white, 0.7)
+          text-decoration: none
+          font-size: 0.95rem
+          transition: $transition
+
+          &:hover
+            color: white
+            text-decoration: underline
+
+  .footer-bottom
+    display: flex
+    flex-direction: column
+    align-items: center
+    gap: 1.5rem
+    padding-top: 2rem
+    border-top: 1px solid rgba(white, 0.1)
+
+    @media (min-width: 768px)
+      flex-direction: row
+      justify-content: space-between
+
+    .currency-selector
+      select
+        background: rgba(white, 0.1)
+        color: white
+        border: none
+        padding: 0.6rem 1rem
+        border-radius: $radius
+        font-size: 0.9rem
+
+        &:focus
+          outline: none
+
+    .copyright
+      color: rgba(white, 0.5)
+      font-size: 0.9rem
+      margin: 0
